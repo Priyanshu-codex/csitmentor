@@ -16,6 +16,10 @@ function getJwtSecret() {
   return secret;
 }
 
+function isJwtConfigured() {
+  return Boolean(process.env.JWT_SECRET && process.env.JWT_SECRET.trim());
+}
+
 function getJwtExpiresIn() {
   return process.env.JWT_EXPIRES_IN || '24h';
 }
@@ -37,4 +41,5 @@ module.exports = {
   getAuthCookieOptions,
   getJwtExpiresIn,
   getJwtSecret,
+  isJwtConfigured,
 };

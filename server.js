@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 
 const connectDB = require('./config/db');
+const { isJwtConfigured } = require('./config/auth');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const recordRoutes = require('./routes/records');
@@ -96,7 +97,11 @@ app.get('/', (req, res) => {
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    authConfigured: isJwtConfigured(),
+  });
 });
 
 // ── API Routes ────────────────────────────────────────────────────────────────
