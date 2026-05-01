@@ -3,12 +3,19 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
+const {
+  AuthConfigError,
+  ONE_DAY_MS,
+  getAuthCookieOptions,
+  getJwtExpiresIn,
+  getJwtSecret,
+} = require('../config/auth');
 
 
 // ── Helper: sign a JWT ────────────────────────────────────────────────────────
 function signToken(userId) {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || '24h',
+  return jwt.sign({ id: userId }, getJwtSecret(), {
+    expiresIn: getJwtExpiresIn(),
   });
 }
 
@@ -82,29 +89,26 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ status: 'error', message: 'Invalid credentials.' });
     }
 
-    // Update lastLogin
-    user.lastLogin = new Date();
-    await user.save({ validateBeforeSave: false });
-
     const token = signToken(user._id);
 
-    const isProduction = process.env.NODE_ENV === 'production';
+    User.updateOne({ _id: user._id }, { $set: { lastLogin: new Date() } }).catch((updateErr) => {
+      console.warn('Unable to update lastLogin:', updateErr.message);
+    });
 
     // Also set httpOnly cookie for extra security
-    res.cookie('csit_jwt', token, {
-      httpOnly: true,
-      secure: isProduction,           // HTTPS only in production
-      sameSite: isProduction ? 'strict' : 'lax',  // strict in prod to block CSRF
-      maxAge: 24 * 60 * 60 * 1000,   // 24h in ms
-    });
+    res.cookie('csit_jwt', token, getAuthCookieOptions());
 
     res.json({
       status: 'success',
       token,
       user: { id: user._id, name: user.name, email: user.email, role: user.role },
-      expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+      expiresAt: Date.now() + ONE_DAY_MS,
     });
   } catch (err) {
+    if (err instanceof AuthConfigError) {
+      console.error('Login configuration error:', err.message);
+      return res.status(err.statusCode).json({ status: 'error', message: 'Authentication is not configured on the server.' });
+    }
     console.error('Login error:', err);
     res.status(500).json({ status: 'error', message: 'Server error during login.' });
   }

@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { AuthConfigError, getJwtSecret } = require('../config/auth');
 
 // ── Verify JWT and attach req.user ───────────────────────────────────────────
 exports.protect = async (req, res, next) => {
@@ -18,7 +19,7 @@ exports.protect = async (req, res, next) => {
     }
 
     // Verify
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, getJwtSecret());
 
     // Fetch user (ensures user still exists and is active)
     const user = await User.findById(decoded.id).select('-password');
@@ -29,6 +30,10 @@ exports.protect = async (req, res, next) => {
     req.user = user;
     next();
   } catch (err) {
+    if (err instanceof AuthConfigError) {
+      console.error('Auth configuration error:', err.message);
+      return res.status(err.statusCode).json({ status: 'error', message: 'Authentication is not configured on the server.' });
+    }
     if (err.name === 'TokenExpiredError') {
       return res.status(401).json({ status: 'error', message: 'Session expired. Please log in again.' });
     }
