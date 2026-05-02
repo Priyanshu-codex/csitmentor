@@ -767,10 +767,11 @@ body {
   padding: 28px;
   background: linear-gradient(135deg, var(--navy) 0%, #16314f 70%, #1e5e46 100%);
   color: var(--white);
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 18px;
+  gap: 18px 20px;
+  position: relative;
 }
 .landing-cta-banner h2 {
   font-family: 'Playfair Display', serif;
@@ -787,6 +788,58 @@ body {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+}
+.landing-back-top {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  padding: 0;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,0.42);
+  border-radius: 14px;
+  color: var(--navy);
+  background:
+    linear-gradient(135deg, rgba(255,255,255,0.95), rgba(232,201,122,0.92));
+  box-shadow:
+    0 18px 34px rgba(0,0,0,0.22),
+    inset 0 1px 0 rgba(255,255,255,0.75);
+  font-size: 0;
+  line-height: 1;
+  overflow: hidden;
+  isolation: isolate;
+  z-index: 2;
+  flex: 0 0 auto;
+}
+.landing-back-top:hover {
+  color: var(--navy);
+  background:
+    linear-gradient(135deg, var(--white), var(--gold-light));
+  box-shadow:
+    0 22px 42px rgba(0,0,0,0.28),
+    inset 0 1px 0 rgba(255,255,255,0.82);
+}
+.landing-back-top::before {
+  content: none;
+}
+.landing-back-top::after {
+  content: '\2191';
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  color: var(--white);
+  background: linear-gradient(135deg, var(--navy), #1e5e46);
+  box-shadow: 0 10px 20px rgba(13,27,42,0.24);
+  font-size: 19px;
+  font-weight: 800;
 }
 
 /* ──────────────────────── AUTH OVERLAY ──────────────────────── */
@@ -2330,9 +2383,8 @@ input[id$="-search"]:focus {
 
 /* Premium landing and workspace motion layer */
 @keyframes softDrift {
-  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
-  33% { transform: translate3d(18px, -16px, 0) rotate(2deg); }
-  66% { transform: translate3d(-14px, 12px, 0) rotate(-2deg); }
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); }
+  50% { transform: translate3d(18px, -16px, 0) rotate(2deg) scale(1.03); }
 }
 
 @keyframes sheenSweep {
@@ -2340,27 +2392,20 @@ input[id$="-search"]:focus {
   to { transform: translateX(145%) skewX(-18deg); }
 }
 
-@keyframes breatheGlow {
-  0%, 100% { box-shadow: 0 24px 60px rgba(13,27,42,0.14); }
-  50% { box-shadow: 0 30px 76px rgba(13,27,42,0.2); }
-}
-
 @keyframes riseReveal {
   from {
     opacity: 0;
-    transform: translateY(22px) scale(0.985);
-    filter: blur(4px);
+    transform: translate3d(0, 24px, 0) scale(0.985);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
 @keyframes floatBadge {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -6px, 0); }
 }
 
 @keyframes pulseRing {
@@ -2376,8 +2421,8 @@ input[id$="-search"]:focus {
 }
 
 @keyframes mentorMeshGlide {
-  0% { background-position: 0 0, 0 0, 0 0; }
-  100% { background-position: 92px 0, 0 92px, 180px 120px; }
+  0%, 100% { transform: translate3d(calc(var(--landing-drift-x) - 10px), calc(var(--landing-drift-y) - 8px), 0); }
+  50% { transform: translate3d(calc(var(--landing-drift-x) + 10px), calc(var(--landing-drift-y) + 8px), 0); }
 }
 
 @keyframes mentorSignalOrbit {
@@ -2407,6 +2452,12 @@ input[id$="-search"]:focus {
   50% { background-position: 100% 50%; }
 }
 
+@keyframes greenLightSweep {
+  0% { transform: translate3d(-45%, -20%, 0) rotate(0deg); opacity: 0.12; }
+  45% { opacity: 0.34; }
+  100% { transform: translate3d(72%, 34%, 0) rotate(14deg); opacity: 0.12; }
+}
+
 .landing-mesh,
 .landing-signal,
 .landing-data-trails {
@@ -2424,8 +2475,8 @@ input[id$="-search"]:focus {
   background-size: 92px 92px, 92px 92px, 100% 100%;
   mask-image: linear-gradient(180deg, rgba(0,0,0,0.55), transparent 72%);
   opacity: 0.5;
-  transform: translate3d(var(--landing-drift-x), var(--landing-drift-y), 0);
-  animation: mentorMeshGlide 26s linear infinite;
+  animation: mentorMeshGlide 18s ease-in-out infinite;
+  will-change: transform;
 }
 
 .landing-signal {
@@ -2498,25 +2549,17 @@ input[id$="-search"]:focus {
 
 .landing-letter-card,
 .landing-panel,
-.landing-cta-banner {
-  animation-name: landingReveal, breatheGlow;
-  animation-duration: 0.9s, 8s;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1), ease-in-out;
-  animation-fill-mode: both, both;
-  animation-iteration-count: 1, infinite;
-}
-
-.landing-letter-card,
-.landing-panel,
 .landing-cta-banner,
 .landing-feature-card,
 .landing-benefit-card,
 .landing-role-card,
 .landing-step,
+.landing-section-header,
 .landing-side-card,
 .landing-mini-grid > article,
 .landing-proof-card {
   backface-visibility: hidden;
+  transform-style: preserve-3d;
 }
 
 .landing-title-accent {
@@ -2537,7 +2580,9 @@ input[id$="-search"]:focus {
 }
 
 .landing-panel {
-  transform: perspective(1200px) rotateX(var(--landing-tilt-x)) rotateY(var(--landing-tilt-y));
+  transform: perspective(1200px) rotateX(var(--landing-tilt-x)) rotateY(var(--landing-tilt-y)) translateZ(0);
+  transition: transform 0.18s ease-out;
+  will-change: transform;
 }
 
 .landing-panel::after {
@@ -2561,18 +2606,21 @@ input[id$="-search"]:focus {
 .landing-benefit-card,
 .landing-role-card,
 .landing-step,
+.landing-section-header,
+.landing-cta-banner,
 .landing-side-card,
 .landing-mini-grid > article,
 .landing-proof-card {
   position: relative;
   overflow: hidden;
   opacity: 0;
-  transform: translateY(18px) scale(0.985);
+  transform: translate3d(0, 18px, 0) scale(0.985);
   transition:
     transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
     box-shadow 0.28s ease,
     border-color 0.28s ease,
     background 0.28s ease;
+  will-change: transform, opacity;
 }
 
 .landing-feature-card::before,
@@ -2606,20 +2654,22 @@ input[id$="-search"]:focus {
 .landing-benefit-card.motion-in,
 .landing-role-card.motion-in,
 .landing-step.motion-in,
+.landing-section-header.motion-in,
+.landing-cta-banner.motion-in,
 .landing-side-card.motion-in,
 .landing-mini-grid > article.motion-in,
 .landing-proof-card.motion-in {
-  animation: riseReveal 0.72s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: riseReveal 0.72s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--motion-delay, 0ms);
 }
 
 .landing-feature-card:hover,
 .landing-benefit-card:hover,
 .landing-role-card:hover,
 .landing-step:hover,
-.landing-side-card:hover,
 .landing-mini-grid > article:hover,
 .landing-proof-card:hover {
-  transform: translateY(-6px) scale(1.01);
+  transform: translate3d(0, -6px, 0) scale(1.01);
   box-shadow: 0 20px 44px rgba(13,27,42,0.14);
   border-color: rgba(201,168,76,0.52);
 }
@@ -2665,6 +2715,49 @@ input[id$="-search"]:focus {
 .btn-action:hover::after,
 .btn-pdf:hover::after {
   animation: sheenSweep 0.78s ease;
+}
+
+.landing-cta-banner::before {
+  content: '';
+  position: absolute;
+  inset: -55%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle, rgba(105,214,153,0.44) 0%, rgba(105,214,153,0.14) 30%, transparent 58%);
+  transform: translate3d(-45%, -20%, 0);
+  animation: greenLightSweep 6.4s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+  will-change: transform, opacity;
+}
+
+.landing-cta-banner > * {
+  position: relative;
+  z-index: 1;
+}
+
+.stat-card.green {
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(45,122,79,0.11), transparent 32%),
+    var(--white);
+}
+
+.stat-card.green::after {
+  content: '';
+  position: absolute;
+  inset: -55%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle, rgba(105,214,153,0.5) 0%, rgba(105,214,153,0.16) 28%, transparent 58%);
+  transform: translate3d(-45%, -20%, 0);
+  animation: greenLightSweep 5.8s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+  will-change: transform, opacity;
+}
+
+.stat-card.green > * {
+  position: relative;
+  z-index: 1;
 }
 
 .btn-action,
@@ -2741,8 +2834,19 @@ tbody tr:hover {
     grid-template-columns: 1fr 1fr;
   }
   .landing-cta-banner {
-    flex-direction: column;
-    align-items: flex-start;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 28px;
+  }
+  .landing-cta-banner > div:first-child {
+    grid-column: 1 / -1;
+  }
+  .landing-cta-actions {
+    grid-column: 1;
+  }
+  .landing-back-top {
+    grid-column: 2;
+    justify-self: end;
+    align-self: center;
   }
 }
 
@@ -2805,6 +2909,22 @@ tbody tr:hover {
   .landing-panel {
     padding: 20px;
   }
+  .landing-cta-banner {
+    grid-template-columns: 1fr;
+    padding: 24px;
+  }
+  .landing-cta-banner > div:first-child,
+  .landing-cta-actions,
+  .landing-back-top {
+    grid-column: 1;
+  }
+  .landing-back-top {
+    justify-self: end;
+    margin-top: 2px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
   .landing-step::after {
     display: none;
   }
@@ -2837,9 +2957,12 @@ tbody tr:hover {
   .landing-benefit-card,
   .landing-role-card,
   .landing-step,
+  .landing-section-header,
   .landing-side-card,
+  .landing-cta-banner,
   .landing-mini-grid > article,
   .landing-proof-card,
+  .stat-card.green::after,
   .panel.active .card,
   .panel.active .stat-card,
   .panel.active .section-heading,
@@ -2853,6 +2976,7 @@ tbody tr:hover {
   }
   .landing-letter-card::before,
   .landing-btn-primary::after,
+  .landing-cta-banner::before,
   .btn-action::after,
   .btn-pdf::after {
     animation: none !important;
@@ -3171,6 +3295,7 @@ tbody tr:hover {
         <button class="landing-btn landing-btn-primary" onclick="showAuthOverlay('login')">Login</button>
         <button class="landing-btn landing-btn-ghost" onclick="showAuthOverlay('signup')">Register</button>
       </div>
+      <a class="landing-btn landing-back-top" href="#landing-page" aria-label="Scroll back to the top of the landing page">Back to Top</a>
     </section>
   </div>
 </div>
@@ -6883,69 +7008,25 @@ document.getElementById('pdf-modal').addEventListener('click', function(e) {
 
   const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const nav = landing.querySelector('.landing-nav');
-  const activeTweens = new Set();
-  let rafId = null;
+  let atmosphereRaf = null;
   let pointerX = 0;
   let pointerY = 0;
   let scrollY = window.scrollY || 0;
   let navScrolled = false;
 
-  const easeOut = t => 1 - Math.pow(1 - t, 3);
-  const easeSoft = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-
-  function schedule() {
-    if (!rafId) rafId = requestAnimationFrame(tick);
-  }
-
-  function tick(now) {
-    rafId = null;
-    activeTweens.forEach(tween => {
-      const progress = Math.min(1, Math.max(0, (now - tween.start) / tween.duration));
-      const eased = tween.ease(progress);
-      const opacity = tween.from.opacity + ((tween.to.opacity - tween.from.opacity) * eased);
-      const y = tween.from.y + ((tween.to.y - tween.from.y) * eased);
-      const scale = tween.from.scale + ((tween.to.scale - tween.from.scale) * eased);
-      tween.el.style.opacity = opacity.toFixed(3);
-      tween.el.style.transform = `translate3d(0, ${y.toFixed(2)}px, 0) scale(${scale.toFixed(4)})`;
-      if (progress >= 1) {
-        activeTweens.delete(tween);
-        if (tween.done) tween.done();
-      }
+  function requestAtmosphereUpdate() {
+    if (atmosphereRaf) return;
+    atmosphereRaf = requestAnimationFrame(() => {
+      atmosphereRaf = null;
+      updateAtmosphere();
     });
-
-    if (activeTweens.size) schedule();
   }
 
-  function tweenElement(el, from, to, duration = 720, delay = 0, ease = easeSoft) {
-    if (!el) return;
-    el.style.willChange = 'transform, opacity';
-    el.style.opacity = from.opacity;
-    el.style.transform = `translate3d(0, ${from.y}px, 0) scale(${from.scale})`;
-    const tween = {
-      el,
-      from,
-      to,
-      duration,
-      ease,
-      start: performance.now() + delay,
-      done() { el.style.willChange = ''; }
-    };
-    activeTweens.add(tween);
-    schedule();
-  }
-
-  function reveal(el, index = 0, y = 26) {
+  function reveal(el, index = 0) {
     if (!el || el.dataset.motionPlayed === 'true') return;
     el.dataset.motionPlayed = 'true';
+    el.style.setProperty('--motion-delay', `${Math.min(index * 54, 280)}ms`);
     el.classList.add('motion-in');
-    tweenElement(
-      el,
-      { opacity: 0, y, scale: 0.985 },
-      { opacity: 1, y: 0, scale: 1 },
-      760,
-      Math.min(index * 58, 340),
-      easeSoft
-    );
   }
 
   function updateAtmosphere() {
@@ -6966,24 +7047,6 @@ document.getElementById('pdf-modal').addEventListener('click', function(e) {
     }
   }
 
-  function bindButtonMotion() {
-    landing.querySelectorAll('.landing-btn').forEach(button => {
-      button.addEventListener('pointerenter', () => {
-        button.style.transition = 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 220ms ease';
-        button.style.transform = 'translate3d(0, -3px, 0) scale(1.018)';
-      }, { passive: true });
-      button.addEventListener('pointerleave', () => {
-        button.style.transform = '';
-      }, { passive: true });
-      button.addEventListener('pointerdown', () => {
-        button.style.transform = 'translate3d(0, 0, 0) scale(0.985)';
-      }, { passive: true });
-      button.addEventListener('pointerup', () => {
-        button.style.transform = 'translate3d(0, -3px, 0) scale(1.018)';
-      }, { passive: true });
-    });
-  }
-
   function initScrollReveals() {
     const selector = [
       '.landing-feature-card',
@@ -6999,7 +7062,7 @@ document.getElementById('pdf-modal').addEventListener('click', function(e) {
     const items = Array.from(landing.querySelectorAll(selector));
 
     if (!('IntersectionObserver' in window)) {
-      items.forEach((el, index) => reveal(el, index, 18));
+      items.forEach((el, index) => reveal(el, index));
       return;
     }
 
@@ -7007,7 +7070,7 @@ document.getElementById('pdf-modal').addEventListener('click', function(e) {
       entries.forEach(entry => {
         if (!entry.isIntersecting) return;
         const group = Array.from((entry.target.parentElement || landing).querySelectorAll(selector));
-        reveal(entry.target, Math.max(0, group.indexOf(entry.target)), 22);
+        reveal(entry.target, Math.max(0, group.indexOf(entry.target)));
         observer.unobserve(entry.target);
       });
     }, { threshold: 0.16, rootMargin: '0px 0px -10% 0px' });
@@ -7022,31 +7085,24 @@ document.getElementById('pdf-modal').addEventListener('click', function(e) {
         el.style.opacity = '1';
         el.style.transform = 'none';
       });
-    return;
+  } else {
+    initScrollReveals();
   }
 
-  [
-    nav,
-    landing.querySelector('.landing-letter-card'),
-    landing.querySelector('.landing-letter-side'),
-    landing.querySelector('.landing-hero-copy'),
-    landing.querySelector('.landing-showcase')
-  ].forEach((el, index) => reveal(el, index, index < 2 ? 18 : 32));
-
-  bindButtonMotion();
-  initScrollReveals();
   updateAtmosphere();
 
-  landing.addEventListener('pointermove', event => {
-    const rect = landing.getBoundingClientRect();
-    pointerX = ((event.clientX - rect.left) / Math.max(rect.width, 1) - 0.5) * 2;
-    pointerY = ((event.clientY - rect.top) / Math.max(rect.height, 1) - 0.5) * 2;
-    requestAnimationFrame(updateAtmosphere);
-  }, { passive: true });
+  if (!reducedMotion) {
+    landing.addEventListener('pointermove', event => {
+      const rect = landing.getBoundingClientRect();
+      pointerX = ((event.clientX - rect.left) / Math.max(rect.width, 1) - 0.5) * 2;
+      pointerY = ((event.clientY - rect.top) / Math.max(rect.height, 1) - 0.5) * 2;
+      requestAtmosphereUpdate();
+    }, { passive: true });
+  }
 
   window.addEventListener('scroll', () => {
     scrollY = window.scrollY || 0;
-    requestAnimationFrame(updateAtmosphere);
+    requestAtmosphereUpdate();
   }, { passive: true });
 })();
 </script>
