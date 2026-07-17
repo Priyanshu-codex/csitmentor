@@ -6975,7 +6975,7 @@
                 onclick="clearProfilePhoto()">Remove</button>
             </div>
             <span style="font-size:10px;color:var(--text-muted);text-align:center;max-width:110px;">
-              JPG/PNG · max 200KB<br>Passport size preferred
+              JPG/PNG · max 100KB<br>Passport size preferred
             </span>
             <input type="file" id="p-photo-input" accept="image/jpeg,image/png"
               style="display:none;" onchange="handlePhotoUpload(event)">
@@ -7036,8 +7036,8 @@
       if (!['image/jpeg', 'image/png'].includes(file.type)) {
         alert('Only JPG and PNG images are supported.'); return;
       }
-      if (file.size > 200 * 1024) {
-        alert('Photo must be under 200KB. Please compress it first.'); return;
+      if (file.size > 100 * 1024) {
+        alert('Photo must be under 100KB. Please compress it first.'); return;
       }
       const reader = new FileReader();
       reader.onload = e => {

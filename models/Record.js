@@ -21,12 +21,12 @@ const personalSchema = new mongoose.Schema({
   certifications: String,
   // Special interests and hobbies (from Co-Curricular panel)
   hobbies: String,
-  // Profile photo stored as a base64 data URL (jpeg/png, capped at ~200KB)
+  // Profile photo stored as a base64 data URL (jpeg/png, capped at ~100KB)
   photoUrl: {
     type: String,
     validate: {
-      validator: v => !v || v.length <= 300000, // ~220KB base64
-      message: 'Profile photo exceeds the maximum allowed size (200KB).',
+      validator: v => !v || v.length <= 150000, // ~110KB base64
+      message: 'Profile photo exceeds the maximum allowed size (100KB).',
     },
   },
 }, { _id: false });
