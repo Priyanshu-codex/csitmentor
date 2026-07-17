@@ -180,6 +180,7 @@ const studentRecordSchema = new mongoose.Schema(
     mentor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
+      index: true,
     },
     // sections
     personal: { type: personalSchema, default: {} },

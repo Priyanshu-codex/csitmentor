@@ -14,14 +14,13 @@
 
 require('dotenv').config();
 const mongoose = require('mongoose');
-const bcrypt   = require('bcryptjs');
 const User     = require('../models/User');
 
 // ── Seed data — change these before running ──────────────────────────────────
 const SEED_ADMIN = {
-  name:     'System Administrator',
-  email:    'admin@csit.edu.in',
-  password: 'Admin@2024',        // Will be hashed by the User pre-save hook
+  name:     process.env.ADMIN_NAME || 'System Administrator',
+  email:    process.env.ADMIN_EMAIL || 'admin@csit.edu.in',
+  password: process.env.ADMIN_PASSWORD || 'Admin@2024',        // Will be hashed by the User pre-save hook
   role:     'admin',
 };
 

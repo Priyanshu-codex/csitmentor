@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const mongoose = require('mongoose');
 const { MentorRecord } = require('../models/Record');
-const { protect, authorize } = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 
 router.use(protect);
 

@@ -4675,6 +4675,10 @@
               <label>Admin Authorization Key</label>
               <input type="password" id="admin-key" placeholder="Enter admin key">
             </div>
+            <div class="form-group" id="mentor-key-group" style="display:none;">
+              <label>Mentor Authorization Key</label>
+              <input type="password" id="mentor-key" placeholder="Enter mentor key">
+            </div>
             <button class="btn-primary" onclick="handleSignup()">Create Account</button>
           </div>
 
@@ -5780,6 +5784,7 @@
       document.querySelectorAll('.role-chip').forEach(c => c.classList.remove('active'));
       document.querySelector(`[data-role="${role}"]`).classList.add('active');
       document.getElementById('admin-key-group').style.display = role === 'admin' ? 'block' : 'none';
+      document.getElementById('mentor-key-group').style.display = role === 'mentor' ? 'block' : 'none';
     }
 
     function switchAuthTab(tab, options = {}) {
@@ -5821,6 +5826,7 @@
       document.getElementById('signup-email').value = '';
       document.getElementById('signup-password').value = '';
       document.getElementById('admin-key').value = '';
+      document.getElementById('mentor-key').value = '';
       document.getElementById('signup-msg').textContent = '';
       document.getElementById('signup-msg').className = 'auth-msg';
       showAuthOverlay('signup');
@@ -5863,6 +5869,7 @@
       const email = document.getElementById('signup-email').value.trim();
       const pw = document.getElementById('signup-password').value;
       const adminKey = document.getElementById('admin-key').value;
+      const mentorKey = document.getElementById('mentor-key').value;
 
       if (!name) { showAuthMsg('signup-msg', '⚠ Name is required.', 'error'); return; }
       if (!validateEmail(email)) { showAuthMsg('signup-msg', '⚠ Invalid email address.', 'error'); return; }
@@ -5873,7 +5880,12 @@
 
       try {
         const body = { name, email, password: pw, role: selectedRole };
-        if (selectedRole === 'admin') body.adminKey = adminKey;
+        if (selectedRole === 'admin') {
+          body.adminKey = adminKey;
+          body.adminRegistrationKey = adminKey;
+        } else if (selectedRole === 'mentor') {
+          body.mentorRegistrationKey = mentorKey;
+        }
 
         const { ok, data } = await api('POST', '/auth/register', body, false);
         if (!ok) {

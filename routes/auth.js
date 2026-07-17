@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
+const validator = require('validator');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
 const {
@@ -22,11 +23,35 @@ function signToken(userId) {
 // ── POST /api/auth/register ───────────────────────────────────────────────────
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password, role, adminKey } = req.body;
+    const { name, email, password, role, adminKey, adminRegistrationKey, mentorRegistrationKey } = req.body;
+
+    // Strict type validation to prevent TypeErrors / NoSQL injection
+    if (typeof name !== 'string' || typeof email !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ status: 'error', message: 'Name, email, and password must be strings.' });
+    }
+    if (role !== undefined && typeof role !== 'string') {
+      return res.status(400).json({ status: 'error', message: 'Role must be a string.' });
+    }
+    if (adminKey !== undefined && typeof adminKey !== 'string') {
+      return res.status(400).json({ status: 'error', message: 'Admin key must be a string.' });
+    }
+    if (adminRegistrationKey !== undefined && typeof adminRegistrationKey !== 'string') {
+      return res.status(400).json({ status: 'error', message: 'Admin registration key must be a string.' });
+    }
+    if (mentorRegistrationKey !== undefined && typeof mentorRegistrationKey !== 'string') {
+      return res.status(400).json({ status: 'error', message: 'Mentor registration key must be a string.' });
+    }
+
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim().toLowerCase();
 
     // Validate required fields
-    if (!name || !email || !password) {
-      return res.status(400).json({ status: 'error', message: 'Name, email and password are required.' });
+    if (!trimmedName || !trimmedEmail || !password) {
+      return res.status(400).json({ status: 'error', message: 'Name, email, and password are required.' });
+    }
+
+    if (!validator.isEmail(trimmedEmail)) {
+      return res.status(400).json({ status: 'error', message: 'Please enter a valid email address.' });
     }
 
     // Password strength
@@ -37,22 +62,27 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    // Guard admin role behind secret key
+    // Guard admin and mentor roles behind secret keys
     const requestedRole = ['admin', 'mentor', 'student'].includes(role) ? role : 'student';
     if (requestedRole === 'admin') {
-      if (adminKey !== process.env.ADMIN_REGISTRATION_KEY) {
+      const aKey = adminKey || adminRegistrationKey;
+      if (aKey !== process.env.ADMIN_REGISTRATION_KEY) {
         return res.status(403).json({ status: 'error', message: 'Invalid admin authorization key.' });
+      }
+    } else if (requestedRole === 'mentor') {
+      if (mentorRegistrationKey !== process.env.MENTOR_REGISTRATION_KEY) {
+        return res.status(403).json({ status: 'error', message: 'Invalid mentor authorization key.' });
       }
     }
 
     // Check duplicate email
-    const existing = await User.findOne({ email: email.toLowerCase() });
+    const existing = await User.findOne({ email: trimmedEmail });
     if (existing) {
       return res.status(409).json({ status: 'error', message: 'An account with this email already exists.' });
     }
 
     // Create user (password gets hashed by mongoose pre-save hook)
-    const user = await User.create({ name, email, password, role: requestedRole });
+    const user = await User.create({ name: trimmedName, email: trimmedEmail, password, role: requestedRole });
 
     res.status(201).json({
       status: 'success',
@@ -73,12 +103,23 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (!email || !password) {
+    // Strict type validation to prevent TypeErrors / NoSQL injection
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ status: 'error', message: 'Email and password must be strings.' });
+    }
+
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail || !password) {
       return res.status(400).json({ status: 'error', message: 'Email and password are required.' });
     }
 
+    // Fast-fail if email is not valid format (saves a database query)
+    if (!validator.isEmail(trimmedEmail)) {
+      return res.status(401).json({ status: 'error', message: 'Invalid credentials.' });
+    }
+
     // Fetch user with password (normally excluded)
-    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    const user = await User.findOne({ email: trimmedEmail }).select('+password');
     if (!user || !user.isActive) {
       return res.status(401).json({ status: 'error', message: 'Invalid credentials.' });
     }
