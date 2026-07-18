@@ -4,7 +4,88 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CSIT Mentor Diary — Chhatrapati Shivaji Institute of Technology</title>
+
+  <!-- Primary Meta Tags -->
+  <title>CSIT Mentor Diary | Student Mentor Management System</title>
+  <meta name="title" content="CSIT Mentor Diary | Student Mentor Management System">
+  <meta name="description"
+    content="CSIT Mentor Diary is a comprehensive digital platform for Chhatrapati Shivaji Institute of Technology (CSIT) Durg faculty mentors to manage student academic records, attendance, placements, and progress.">
+  <meta name="keywords"
+    content="CSIT Mentor Diary, CSIT Durg Mentor Diary, Student Mentor Management System, Engineering Mentor Diary, Faculty Mentor Portal, Student Progress Tracking, Student Academic Record System, College Mentor Dashboard, Student Counseling Portal, Student Attendance Management, Student Performance Tracking, Mentor Management Software, CSIT Durg Student Portal, Engineering College ERP, Academic Monitoring System">
+  <meta name="author" content="Priyanshu Mahobia">
+  <meta name="creator" content="Priyanshu Mahobia">
+  <meta name="application-name" content="CSIT Mentor Diary">
+  <meta name="publisher" content="Chhatrapati Shivaji Institute of Technology (CSIT), Durg">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://csitdurg.edu.in/mentor-diary">
+  <meta property="og:title" content="CSIT Mentor Diary | Student Mentor Management System">
+  <meta property="og:description"
+    content="CSIT Mentor Diary is a comprehensive digital platform for CSIT Durg faculty mentors to manage student academic records, attendance, placements, and progress.">
+  <meta property="og:image" content="https://csitdurg.edu.in/mentor-diary/favicon.png">
+  <meta property="og:site_name" content="CSIT Mentor Diary">
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://csitdurg.edu.in/mentor-diary">
+  <meta property="twitter:title" content="CSIT Mentor Diary | Student Mentor Management System">
+  <meta property="twitter:description"
+    content="CSIT Mentor Diary is a comprehensive digital platform for CSIT Durg faculty mentors to manage student academic records, attendance, placements, and progress.">
+  <meta property="twitter:image" content="https://csitdurg.edu.in/mentor-diary/favicon.png">
+  <meta name="twitter:creator" content="Priyanshu Mahobia">
+
+  <!-- Canonical & PWA -->
+  <link rel="canonical" href="https://csitdurg.edu.in/mentor-diary">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
+
+  <!-- Performance / Preconnects -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- Structured Data / JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": "CSIT Mentor Diary",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Any",
+        "url": "https://csitdurg.edu.in/mentor-diary",
+        "description": "A digital mentor diary platform where faculty mentors can manage student records, attendance, academic progress, and counseling history.",
+        "author": {
+          "@type": "Person",
+          "name": "Priyanshu Mahobia",
+          "url": "https://github.com/Priyanshu-codex"
+        },
+        "publisher": {
+          "@type": "EducationalOrganization",
+          "name": "Chhatrapati Shivaji Institute of Technology (CSIT)",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Durg",
+            "addressRegion": "Chhattisgarh",
+            "addressCountry": "India"
+          }
+        }
+      },
+      {
+        "@type": "WebSite",
+        "name": "CSIT Mentor Diary",
+        "url": "https://csitdurg.edu.in/mentor-diary",
+        "author": {
+          "@type": "Person",
+          "name": "Priyanshu Mahobia",
+          "url": "https://github.com/Priyanshu-codex"
+        }
+      }
+    ]
+  }
+  </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
 
@@ -4777,6 +4858,17 @@
           <button class="nav-item" id="nav-my-students" onclick="navigate('my-students')"><span
               class="icon">👨‍🎓</span> Assigned Students</button>
         </div>
+
+        <div class="sidebar-footer"
+          style="padding: 16px 20px; margin-top: 30px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-muted); line-height: 1.5;">
+          <div style="font-weight: 500; margin-bottom: 4px;">CSIT Mentor Diary</div>
+          <div style="font-size: 10.5px; opacity: 0.85;">© 2026 CSIT, Durg.</div>
+          <div style="margin-top: 6px; font-size: 10.5px; opacity: 0.85;">
+            Developed by <a href="https://github.com/Priyanshu-codex" target="_blank" rel="noopener noreferrer"
+              style="color: var(--gold); text-decoration: none; font-weight: 600;"
+              aria-label="GitHub profile of Priyanshu Mahobia">Priyanshu Mahobia</a>.
+          </div>
+        </div>
       </nav>
 
       <!-- Student context banner (shown when admin/mentor opens a student profile) -->
@@ -5146,6 +5238,98 @@
           <div id="my-students-content">
             <div class="card">
               <div class="card-body" style="text-align:center;color:var(--text-muted);padding:30px;">⏳ Loading...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ═══ ABOUT PANEL ═══ -->
+        <div id="panel-about" class="panel">
+          <div class="page-header">
+            <div>
+              <div class="page-title">About App</div>
+              <div class="page-subtitle">System Information and Developer Credits</div>
+            </div>
+          </div>
+
+          <div
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-top: 10px;">
+            <!-- About Card -->
+            <div class="card" style="margin-bottom: 0;">
+              <div class="card-header">
+                <span class="card-title">CSIT Mentor Diary</span>
+              </div>
+              <div class="card-body" style="line-height: 1.6; color: var(--text-muted);">
+                <p style="margin-bottom: 16px;">
+                  Built to simplify faculty mentoring, student progress tracking, attendance, counseling records,
+                  academic monitoring, and reporting for Chhatrapati Shivaji Institute of Technology (CSIT) Durg.
+                </p>
+
+              </div>
+            </div>
+
+            <!-- Settings / Metadata Card -->
+            <div class="card" style="margin-bottom: 0;">
+              <div class="card-header">
+                <span class="card-title">System Information</span>
+              </div>
+              <div class="card-body">
+                <div style="display: flex; flex-direction: column; gap: 14px;">
+                  <div
+                    style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                    <span style="color: var(--text-muted); font-size: 13px;">Application Name</span>
+                    <strong style="color: var(--navy); font-size: 13px;">CSIT Mentor Diary</strong>
+                  </div>
+                  <div
+                    style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                    <span style="color: var(--text-muted); font-size: 13px;">Version</span>
+                    <strong style="color: var(--navy); font-size: 13px;">1.0.0</strong>
+                  </div>
+                  <div
+                    style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                    <span style="color: var(--text-muted); font-size: 13px;">Developer</span>
+                    <strong style="color: var(--navy); font-size: 13px;">
+                      <a href="https://github.com/Priyanshu-codex" target="_blank" rel="noopener noreferrer"
+                        style="color: var(--gold); text-decoration: none; font-weight: 600;"
+                        aria-label="GitHub profile of Priyanshu Mahobia">Priyanshu Mahobia</a>
+                    </strong>
+                  </div>
+                  <div
+                    style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                    <span style="color: var(--text-muted); font-size: 13px;">Role</span>
+                    <strong style="color: var(--navy); font-size: 13px;">Full Stack Developer</strong>
+                  </div>
+                  <div
+                    style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                    <span style="color: var(--text-muted); font-size: 13px;">GitHub</span>
+                    <strong style="color: var(--navy); font-size: 13px;">
+                      <a href="https://github.com/Priyanshu-codex" target="_blank" rel="noopener noreferrer"
+                        style="color: var(--gold); text-decoration: none; font-weight: 500;"
+                        aria-label="View code repository on GitHub">github.com/Priyanshu-codex</a>
+                    </strong>
+                  </div>
+                  <div
+                    style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                    <span style="color: var(--text-muted); font-size: 13px;">LinkedIn</span>
+                    <strong style="color: var(--navy); font-size: 13px;">
+                      <a href="https://www.linkedin.com/in/priyanshu-mahobia-b71b85309/" target="_blank"
+                        rel="noopener noreferrer" style="color: var(--gold); text-decoration: none; font-weight: 500;"
+                        aria-label="LinkedIn profile of Priyanshu Mahobia">LinkedIn Profile</a>
+                    </strong>
+                  </div>
+                  <div
+                    style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+                    <span style="color: var(--text-muted); font-size: 13px;">Email</span>
+                    <strong style="color: var(--navy); font-size: 13px;">
+                      <a href="mailto:priyanshumahobia22@gmail.com"
+                        style="color: var(--gold); text-decoration: none; font-weight: 500;">priyanshumahobia22@gmail.com</a>
+                    </strong>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; padding-bottom: 4px;">
+                    <span style="color: var(--text-muted); font-size: 13px;">Build Version</span>
+                    <strong style="color: var(--navy); font-size: 13px;">1.0.0-release</strong>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -5974,6 +6158,11 @@
 
     // Check for existing valid session on load
     window.addEventListener('load', async () => {
+      console.log(
+        "%cCSIT Mentor Diary\n%cDeveloped by Priyanshu Mahobia",
+        "font-weight: bold; font-size: 16px; color: #c9a84c;",
+        "font-size: 12px; color: #0d1b2a;"
+      );
       const initialRoute = parseRouteFromLocation();
       const token = SESSION.get();
       if (token && isTokenValid(token)) {
@@ -6003,9 +6192,9 @@
     //  ROLE-BASED ACCESS
     // ══════════════════════════════════════════════════════
     const ACCESS = {
-      admin: ['dashboard', 'mentor-profile', 'objectives', 'roles', 'parameters', 'personal', 'family', 'academic-cred', 'prizes', 'academic-rec', 'participation', 'performance', 'improvement', 'interaction', 'effectiveness', 'overall-score', 'user-mgmt', 'assign-mentor', 'all-records'],
-      mentor: ['dashboard', 'mentor-profile', 'objectives', 'roles', 'parameters', 'my-students'],
-      student: ['dashboard', 'objectives', 'roles', 'parameters', 'personal', 'family', 'academic-cred', 'prizes', 'academic-rec', 'participation', 'performance', 'improvement', 'interaction', 'effectiveness', 'overall-score'],
+      admin: ['dashboard', 'mentor-profile', 'objectives', 'roles', 'parameters', 'personal', 'family', 'academic-cred', 'prizes', 'academic-rec', 'participation', 'performance', 'improvement', 'interaction', 'effectiveness', 'overall-score', 'user-mgmt', 'assign-mentor', 'all-records', 'about'],
+      mentor: ['dashboard', 'mentor-profile', 'objectives', 'roles', 'parameters', 'my-students', 'about'],
+      student: ['dashboard', 'objectives', 'roles', 'parameters', 'personal', 'family', 'academic-cred', 'prizes', 'academic-rec', 'participation', 'performance', 'improvement', 'interaction', 'effectiveness', 'overall-score', 'about'],
     };
 
     const STUDENT_PANEL_CONTENT_AREAS = {
@@ -7833,7 +8022,7 @@
 
       const countLabel = '<span id="' + prefix + '-count" style="font-size:12px;color:var(--text-muted);">' +
         (hasFilter ? 'Showing <strong style="color:var(--navy);">' + filteredCount + '</strong> of ' + totalCount + ' student(s)'
-                   : '<strong>' + totalCount + '</strong> student(s) total') +
+          : '<strong>' + totalCount + '</strong> student(s) total') +
         '</span>';
 
       const clearX = '<button id="' + prefix + '-clear" onclick="document.getElementById(\'' + prefix + '-search\').value=\'\';applyAndRender(\'' + prefix + '\')" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;color:var(--text-muted);line-height:1;padding:2px 4px;display:' + (f.search ? 'block' : 'none') + '">&times;</button>';
@@ -7879,7 +8068,7 @@
         try {
           start = activeEl.selectionStart;
           end = activeEl.selectionEnd;
-        } catch (e) {}
+        } catch (e) { }
       }
 
       if (prefix === 'ar' && _allRecordsCache) renderAllRecordsTable(_allRecordsCache);
@@ -7890,7 +8079,7 @@
         if (newEl) {
           newEl.focus();
           if (start !== null && end !== null && newEl.tagName === 'INPUT') {
-            try { newEl.setSelectionRange(start, end); } catch (e) {}
+            try { newEl.setSelectionRange(start, end); } catch (e) { }
           }
         }
       }
@@ -7977,14 +8166,14 @@
       const tbody = el.querySelector('tbody');
       if (tbody) {
         tbody.innerHTML = rows || emptyRow;
-        
+
         const hasFilter = !!(f.search || f.branch || f.semester || f.status || f.sort);
         const countLabel = document.getElementById('ar-count');
         if (countLabel) countLabel.innerHTML = hasFilter ? 'Showing <strong style="color:var(--navy);">' + filtered.length + '</strong> of ' + studentRecords.length + ' student(s)' : '<strong>' + studentRecords.length + '</strong> student(s) total';
-        
+
         const resetBtn = document.getElementById('ar-reset');
         if (resetBtn) resetBtn.style.display = hasFilter ? 'block' : 'none';
-        
+
         const clearX = document.getElementById('ar-clear');
         if (clearX) clearX.style.display = f.search ? 'block' : 'none';
         return;
@@ -8119,14 +8308,14 @@
       const gridContainer = el.querySelector('#ms-grid-container');
       if (gridContainer) {
         gridContainer.innerHTML = gridHTML;
-        
+
         const hasFilter = !!(f.search || f.branch || f.semester || f.status || f.sort);
         const countLabel = document.getElementById('ms-count');
         if (countLabel) countLabel.innerHTML = hasFilter ? 'Showing <strong style="color:var(--navy);">' + filtered.length + '</strong> of ' + records.length + ' student(s)' : '<strong>' + records.length + '</strong> student(s) total';
-        
+
         const resetBtn = document.getElementById('ms-reset');
         if (resetBtn) resetBtn.style.display = hasFilter ? 'block' : 'none';
-        
+
         const clearX = document.getElementById('ms-clear');
         if (clearX) clearX.style.display = f.search ? 'block' : 'none';
         return;

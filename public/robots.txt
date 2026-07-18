@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Private API endpoints
+Disallow: /api/
+
+Sitemap: https://csitdurg.edu.in/mentor-diary/sitemap.xml

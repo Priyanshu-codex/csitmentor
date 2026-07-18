@@ -1,0 +1,17 @@
+{
+  "name": "CSIT Mentor Diary",
+  "short_name": "Mentor Diary",
+  "description": "Student Mentor Management System for CSIT Durg",
+  "author": "Priyanshu Mahobia",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1b2a",
+  "theme_color": "#c9a84c",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png"
+    }
+  ]
+}
