@@ -4,4 +4,4 @@ Allow: /
 # Private API endpoints
 Disallow: /api/
 
-Sitemap: https://csitdurg.edu.in/mentor-diary/sitemap.xml
+Sitemap: https://www.csitdurg.in/mentor-diary/sitemap.xml

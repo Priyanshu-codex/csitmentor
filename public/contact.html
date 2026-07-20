@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Support | CSIT Mentor Diary</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .contact-container {
+      max-width: 1000px;
+      margin: 120px auto 60px;
+      padding: 0 24px;
+    }
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 32px;
+    }
+    @media (max-width: 768px) {
+      .contact-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .contact-info-card {
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(13, 27, 42, 0.05);
+      border-radius: 28px;
+      padding: 40px;
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .contact-form-card {
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(13, 27, 42, 0.05);
+      border-radius: 28px;
+      padding: 40px;
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+    }
+    .contact-header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 34px;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 8px;
+    }
+    .contact-header p {
+      color: var(--text-muted);
+      font-size: 14.5px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+    .info-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .info-icon {
+      background: rgba(201, 168, 76, 0.1);
+      color: var(--gold);
+      border-radius: 12px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .info-text h3 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--navy);
+      margin-bottom: 4px;
+      font-weight: 700;
+    }
+    .info-text p, .info-text a {
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.5;
+      text-decoration: none;
+    }
+    .info-text a:hover {
+      color: var(--gold);
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--navy);
+    }
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(13, 27, 42, 0.1);
+      background: rgba(255, 255, 255, 0.8);
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--navy);
+      transition: all 0.25s;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--gold);
+      background: var(--white);
+      box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.15);
+    }
+    .form-textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+    .btn-submit-support {
+      background: var(--navy);
+      color: var(--gold-light);
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.25s;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: var(--shadow);
+    }
+    .btn-submit-support:hover {
+      background: var(--navy-mid);
+      color: var(--gold);
+      transform: translateY(-2px);
+    }
+    .back-home-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--navy);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 13.5px;
+      margin-bottom: 32px;
+      transition: color 0.2s;
+    }
+    .back-home-btn:hover {
+      color: var(--gold);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="landing-page">
+    <div class="landing-ambient" aria-hidden="true">
+      <div class="landing-mesh"></div>
+      <div class="landing-orb one"></div>
+      <div class="landing-orb two"></div>
+    </div>
+
+    <div class="landing-shell">
+      <header class="landing-nav">
+        <div class="landing-brand">
+          <div class="landing-brand-mark">Mentor Diary</div>
+          <div class="landing-brand-copy">CSIT mentor-student growth platform</div>
+        </div>
+        <div class="landing-nav-links">
+          <a href="mentor-diary.html">Home</a>
+          <a href="mentor-diary.html#about">About App</a>
+          <a href="privacy.html">Privacy</a>
+        </div>
+      </header>
+
+      <main class="contact-container">
+        <a href="mentor-diary.html" class="back-home-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+          Back to Platform
+        </a>
+
+        <div class="contact-grid">
+          <div class="contact-info-card">
+            <div>
+              <div class="contact-header">
+                <h1>Contact Support</h1>
+                <p>Have questions about access keys, account configuration, or mentorship data boundaries? Get in touch with our institutional support desk.</p>
+              </div>
+
+              <div class="info-item">
+                <div class="info-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                </div>
+                <div class="info-text">
+                  <h3>Campus Address</h3>
+                  <p>Chhatrapati Shivaji Institute of Technology<br>Shivaji Nagar, Balod Road, Kolihapuri, Durg, Chhattisgarh - 491001</p>
+                </div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                </div>
+                <div class="info-text">
+                  <h3>Email Address</h3>
+                  <p><a href="mailto:support@csitdurg.in">support@csitdurg.in</a></p>
+                </div>
+              </div>
+
+              <div class="info-item">
+                <div class="info-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                </div>
+                <div class="info-text">
+                  <h3>Official Webcell</h3>
+                  <p><a href="https://www.csitdurg.in" target="_blank">www.csitdurg.in</a></p>
+                </div>
+              </div>
+            </div>
+
+            <div style="border-top: 1px solid rgba(13, 27, 42, 0.08); padding-top: 24px; margin-top: 24px; font-size: 13px; color: var(--text-muted);">
+              <strong>Operating Hours:</strong> Monday – Saturday: 9:00 AM – 5:00 PM (IST)
+            </div>
+          </div>
+
+          <div class="contact-form-card">
+            <form id="support-form" onsubmit="handleSupportSubmit(event)">
+              <div class="form-group">
+                <label for="support-name">Your Full Name</label>
+                <input type="text" id="support-name" class="form-input" placeholder="Enter your name" required>
+              </div>
+
+              <div class="form-group">
+                <label for="support-role">Your Platform Role</label>
+                <select id="support-role" class="form-select" required>
+                  <option value="" disabled selected>Select your role</option>
+                  <option value="student">Student</option>
+                  <option value="mentor">Mentor</option>
+                  <option value="admin">Administrator</option>
+                  <option value="parent">Parent/Guardian</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="support-email">Institutional Email</label>
+                <input type="email" id="support-email" class="form-input" placeholder="username@csitdurg.in" required>
+              </div>
+
+              <div class="form-group">
+                <label for="support-category">Issue Category</label>
+                <select id="support-category" class="form-select" required>
+                  <option value="" disabled selected>Select category</option>
+                  <option value="login">Access & Login Issues</option>
+                  <option value="records">Academic Records Update</option>
+                  <option value="pdf">PDF Report Generation</option>
+                  <option value="other">General Queries</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="support-subject">Subject</label>
+                <input type="text" id="support-subject" class="form-input" placeholder="Summary of the issue" required>
+              </div>
+
+              <div class="form-group">
+                <label for="support-desc">Detailed Description</label>
+                <textarea id="support-desc" class="form-textarea" placeholder="Please elaborate on your request..." required></textarea>
+              </div>
+
+              <button type="submit" class="btn-submit-support">
+                Submit Support Ticket
+              </button>
+            </form>
+          </div>
+        </div>
+      </main>
+
+      <div id="about-share-toast" class="about-toast"></div>
+
+      <footer class="about-page-footer" style="padding-bottom: 40px; margin-top: 40px;">
+        <div class="footer-title">Designed & Developed by</div>
+        <div class="footer-attribution"><strong>Priyanshu Mahobia</strong></div>
+        <div class="footer-thanks" style="font-size: 11px; margin-top: 8px;">CSIT Mentor Diary is an Official Faculty Resource platform.</div>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    let toastTimeout = null;
+
+    function showToast(message) {
+      const toast = document.getElementById('about-share-toast');
+      if (!toast) return;
+      if (toastTimeout) {
+        clearTimeout(toastTimeout);
+      }
+      toast.textContent = message;
+      toast.classList.add('visible');
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('visible');
+        toastTimeout = null;
+      }, 3500);
+    }
+
+    function handleSupportSubmit(event) {
+      event.preventDefault();
+      
+      const name = document.getElementById('support-name').value;
+      const role = document.getElementById('support-role').value;
+      const email = document.getElementById('support-email').value;
+      const subject = document.getElementById('support-subject').value;
+      
+      console.log('Support Ticket Created:', { name, role, email, subject });
+      
+      showToast("Thank you! Your ticket has been submitted. We will contact you soon.");
+      
+      document.getElementById('support-form').reset();
+    }
+  </script>
+</body>
+
+</html>
