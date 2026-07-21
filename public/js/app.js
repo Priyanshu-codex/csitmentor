@@ -3479,10 +3479,15 @@
         }
       }
 
+      let lastRingOpacity = null;
       function updateScroll() {
         const scrollRatio = Math.min(1, Math.max(0, scrollY / 700));
         if (panelEl) {
-          panelEl.style.setProperty('--landing-panel-ring-opacity', (0.24 + (scrollRatio * 0.22)).toFixed(3));
+          const newOpacity = (0.24 + (scrollRatio * 0.22)).toFixed(3);
+          if (newOpacity !== lastRingOpacity) {
+            lastRingOpacity = newOpacity;
+            panelEl.style.setProperty('--landing-panel-ring-opacity', newOpacity);
+          }
         }
 
         const shouldShrink = scrollY > 18;

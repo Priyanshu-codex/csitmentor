@@ -1,85 +1,93 @@
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
-    :root {
-      --navy: #0d1b2a;
-      --navy-mid: #1b2d42;
-      --navy-light: #243447;
-      --gold: #c9a84c;
-      --gold-light: #e8c97a;
-      --gold-pale: #f5e6b8;
-      --cream: #faf7f0;
-      --white: #ffffff;
-      --text: #1a2332;
-      --text-muted: #5a6a7e;
-      --border: #d8cdb4;
-      --success: #2d7a4f;
-      --error: #c0392b;
-      --warning: #e67e22;
-      --shadow: 0 4px 24px rgba(13, 27, 42, 0.12);
-      --shadow-lg: 0 12px 48px rgba(13, 27, 42, 0.18);
-    }
+:root {
+  --navy: #0d1b2a;
+  --navy-mid: #1b2d42;
+  --navy-light: #243447;
+  --gold: #c9a84c;
+  --gold-light: #e8c97a;
+  --gold-pale: #f5e6b8;
+  --cream: #faf7f0;
+  --white: #ffffff;
+  --text: #1a2332;
+  --text-muted: #5a6a7e;
+  --border: #d8cdb4;
+  --success: #2d7a4f;
+  --error: #c0392b;
+  --warning: #e67e22;
+  --shadow: 0 4px 24px rgba(13, 27, 42, 0.12);
+  --shadow-lg: 0 12px 48px rgba(13, 27, 42, 0.18);
+}
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-    html {
-      scroll-behavior: smooth;
-    }
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+}
 
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: var(--cream);
-      color: var(--text);
-      min-height: 100vh;
-    }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--cream);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeSpeed;
+}
 
-    /* LANDING PAGE */
-    #landing-page {
-      min-height: 100vh;
-      position: relative;
-      overflow: hidden;
-      --landing-drift-x: 0px;
-      --landing-drift-y: 0px;
-      --landing-drift-x-reverse: 0px;
-      --landing-drift-y-reverse: 0px;
-      --landing-tilt-x: 0deg;
-      --landing-tilt-y: 0deg;
-      --landing-panel-ring-opacity: 0.24;
-      background:
-        radial-gradient(circle at top left, rgba(201, 168, 76, 0.2), transparent 28%),
-        radial-gradient(circle at top right, rgba(45, 122, 79, 0.16), transparent 24%),
-        linear-gradient(180deg, #f9f6ef 0%, #f2ece0 100%);
-    }
+/* LANDING PAGE */
+#landing-page {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  --landing-drift-x: 0px;
+  --landing-drift-y: 0px;
+  --landing-drift-x-reverse: 0px;
+  --landing-drift-y-reverse: 0px;
+  --landing-tilt-x: 0deg;
+  --landing-tilt-y: 0deg;
+  --landing-panel-ring-opacity: 0.24;
+  background:
+    radial-gradient(circle at top left, rgba(201, 168, 76, 0.2), transparent 28%),
+    radial-gradient(circle at top right, rgba(45, 122, 79, 0.16), transparent 24%),
+    linear-gradient(180deg, #f9f6ef 0%, #f2ece0 100%);
+  contain: content;
+}
 
-    #landing-page.hidden {
-      display: none;
-    }
+#landing-page.hidden {
+  display: none;
+}
 
-    .landing-ambient {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      overflow: hidden;
-    }
+.landing-ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  contain: strict;
+}
 
-    .landing-orb {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(10px);
-      opacity: 0.55;
-      animation: landingFloat 10s ease-in-out infinite;
-    }
+.landing-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(10px);
+  opacity: 0.55;
+  animation: landingFloat 10s ease-in-out infinite;
+  will-change: transform;
+  transform: translateZ(0);
+}
 
-    .landing-orb.one {
-      width: 280px;
-      height: 280px;
-      top: -80px;
-      right: -40px;
-      background: rgba(201, 168, 76, 0.22);
-    }
+.landing-orb.one {
+  width: 280px;
+  height: 280px;
+  top: -80px;
+  right: -40px;
+  background: rgba(201, 168, 76, 0.22);
+}
 
     .landing-orb.two {
       width: 220px;
