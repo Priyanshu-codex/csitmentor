@@ -34,6 +34,23 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    deactivatedAt: Date,
+    deactivatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    activatedAt: Date,
+    activatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    deactivationReason: String,
+    deactivationReasonType: {
+      type: String,
+      enum: ['Violation', 'Inactive', 'Completed Course', 'Duplicate Account', 'Other'],
+    },
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
     lastLogin: Date,
     passwordChangedAt: Date,
   },

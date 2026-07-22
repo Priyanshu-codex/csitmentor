@@ -144,7 +144,8 @@
       if (route.screen === 'auth') {
         return {
           screen: 'auth',
-          tab: route.tab === 'signup' ? 'signup' : 'login',
+          tab: ['signup', 'login', 'forgot', 'reset-password'].includes(route.tab) ? route.tab : 'login',
+          token: route.token || '',
         };
       }
 
@@ -167,7 +168,7 @@
       const normalized = normalizeRoute(route);
       const url = new URL(window.location.href);
 
-      ['screen', 'tab', 'panel', 'student'].forEach(key => url.searchParams.delete(key));
+      ['screen', 'tab', 'panel', 'student', 'token'].forEach(key => url.searchParams.delete(key));
 
       if (normalized.screen === 'about-app') {
         url.searchParams.set('screen', 'about-app');
@@ -175,6 +176,7 @@
       } else if (normalized.screen === 'auth') {
         url.searchParams.set('screen', 'auth');
         url.searchParams.set('tab', normalized.tab);
+        if (normalized.token) url.searchParams.set('token', normalized.token);
         url.hash = '';
       } else if (normalized.screen === 'app') {
         url.searchParams.set('screen', 'app');
@@ -200,9 +202,11 @@
       }
 
       if (screen === 'auth') {
+        const tab = params.get('tab');
         return {
           screen: 'auth',
-          tab: params.get('tab') === 'signup' ? 'signup' : 'login',
+          tab: ['signup', 'login', 'forgot', 'reset-password'].includes(tab) ? tab : 'login',
+          token: params.get('token') || '',
         };
       }
 
@@ -259,7 +263,7 @@
 
         if (normalized.screen === 'auth') {
           hideAboutPage();
-          showAuthOverlay(normalized.tab, { historyMode: 'none' });
+          showAuthOverlay(normalized.tab, { historyMode: 'none', token: normalized.token });
           return;
         }
 
@@ -323,12 +327,27 @@
     }
 
     function switchAuthTab(tab, options = {}) {
-      document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'signup')));
+      const isHeaderTab = ['login', 'signup'].includes(tab);
+      document.querySelectorAll('.auth-tab').forEach((t, i) => {
+        t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'signup'));
+        t.style.display = isHeaderTab ? '' : 'none';
+      });
+
+      // Show/hide sub panels
+      document.getElementById('login-panel').style.display = tab === 'login' ? 'block' : 'none';
+      document.getElementById('signup-panel').style.display = tab === 'signup' ? 'block' : 'none';
+      document.getElementById('forgot-panel').style.display = tab === 'forgot' ? 'block' : 'none';
+      document.getElementById('reset-password-panel').style.display = tab === 'reset-password' ? 'block' : 'none';
+
       document.getElementById('login-panel').classList.toggle('active', tab === 'login');
       document.getElementById('signup-panel').classList.toggle('active', tab === 'signup');
+      document.getElementById('forgot-panel').classList.toggle('active', tab === 'forgot');
+      document.getElementById('reset-password-panel').classList.toggle('active', tab === 'reset-password');
 
       if (isAuthOverlayVisible() && !isApplyingRoute) {
-        commitRoute({ screen: 'auth', tab }, options.historyMode || 'push');
+        const routeObj = { screen: 'auth', tab };
+        if (options.token) routeObj.token = options.token;
+        commitRoute(routeObj, options.historyMode || 'push');
       }
     }
 
@@ -340,16 +359,48 @@
       document.getElementById('landing-page').classList.remove('hidden');
     }
 
+    function showForgotOverlay() {
+      document.getElementById('forgot-email').value = '';
+      document.getElementById('forgot-msg').textContent = '';
+      document.getElementById('forgot-msg').className = 'auth-msg';
+      showAuthOverlay('forgot');
+    }
+    window.showForgotOverlay = showForgotOverlay;
+
+    function showResetPasswordOverlay(token) {
+      document.getElementById('reset-token-value').value = token || '';
+      document.getElementById('reset-new-password').value = '';
+      document.getElementById('reset-confirm-password').value = '';
+      document.getElementById('reset-password-msg').textContent = '';
+      document.getElementById('reset-password-msg').className = 'auth-msg';
+      
+      // Reset strength indicator
+      document.getElementById('password-strength-bar').style.width = '0';
+      document.getElementById('password-strength-bar').style.backgroundColor = 'var(--error)';
+      document.getElementById('password-strength-text').textContent = 'Strength: Empty';
+      
+      // Hide login back button until success
+      document.getElementById('btn-reset-back-login').style.display = 'none';
+      document.getElementById('btn-reset-submit').style.display = 'block';
+
+      showAuthOverlay('reset-password', { token });
+    }
+    window.showResetPasswordOverlay = showResetPasswordOverlay;
+
     function showAuthOverlay(tab = 'login', options = {}) {
       hideLandingPage();
-      switchAuthTab(tab, { historyMode: 'none' });
+      switchAuthTab(tab, { historyMode: 'none', token: options.token });
       document.getElementById('auth-overlay').classList.remove('hidden');
 
       if (!isApplyingRoute) {
-        commitRoute({ screen: 'auth', tab }, options.historyMode || 'push');
+        commitRoute({ screen: 'auth', tab, token: options.token }, options.historyMode || 'push');
       }
 
-      const focusId = tab === 'signup' ? 'signup-name' : 'login-email';
+      let focusId = 'login-email';
+      if (tab === 'signup') focusId = 'signup-name';
+      if (tab === 'forgot') focusId = 'forgot-email';
+      if (tab === 'reset-password') focusId = 'reset-new-password';
+
       const focusEl = document.getElementById(focusId);
       if (focusEl) setTimeout(() => focusEl.focus(), 120);
     }
@@ -398,6 +449,147 @@
         btn.textContent = 'Secure Sign In'; btn.disabled = false;
       }
     }
+
+    async function handleForgotPassword() {
+      const email = document.getElementById('forgot-email').value.trim();
+      if (!validateEmail(email)) {
+        showAuthMsg('forgot-msg', '⚠ Please enter a valid email address.', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btn-forgot-submit');
+      const originalText = btn.textContent;
+      btn.textContent = 'Sending link...';
+      btn.disabled = true;
+
+      try {
+        const { ok, data } = await api('POST', '/auth/forgot-password', { email }, false);
+        if (!ok) {
+          showAuthMsg('forgot-msg', '❌ ' + (data.message || 'Verification failed.'), 'error');
+          return;
+        }
+        showAuthMsg('forgot-msg', '✅ ' + data.message, 'success');
+        document.getElementById('forgot-email').value = '';
+      } catch (err) {
+        showAuthMsg('forgot-msg', '⚠ Connection failed. Is the server online?', 'error');
+        console.error(err);
+      } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+      }
+    }
+    window.handleForgotPassword = handleForgotPassword;
+
+    async function handleResetPassword() {
+      const token = document.getElementById('reset-token-value').value;
+      const newPassword = document.getElementById('reset-new-password').value;
+      const confirmPassword = document.getElementById('reset-confirm-password').value;
+
+      if (!token) {
+        showAuthMsg('reset-password-msg', '❌ Missing token. Please use the link in your email.', 'error');
+        return;
+      }
+
+      // Strong validation matching backend rules
+      const hasLength = newPassword.length >= 8;
+      const hasUpper = /[A-Z]/.test(newPassword);
+      const hasLower = /[a-z]/.test(newPassword);
+      const hasNumber = /[0-9]/.test(newPassword);
+      const hasSpecial = /[^A-Za-z0-9]/.test(newPassword);
+
+      if (!hasLength || !hasUpper || !hasLower || !hasNumber || !hasSpecial) {
+        showAuthMsg('reset-password-msg', '⚠ Password must be 8+ chars and contain uppercase, lowercase, number, and special character.', 'error');
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        showAuthMsg('reset-password-msg', '⚠ Confirm password does not match.', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btn-reset-submit');
+      const originalText = btn.textContent;
+      btn.textContent = 'Updating password...';
+      btn.disabled = true;
+
+      try {
+        const { ok, data } = await api('POST', `/auth/reset-password/${token}`, { password: newPassword }, false);
+        if (!ok) {
+          showAuthMsg('reset-password-msg', '❌ ' + (data.message || 'Reset failed.'), 'error');
+          return;
+        }
+        
+        showAuthMsg('reset-password-msg', '✅ ' + data.message + ' Redirecting to login...', 'success');
+        
+        // Success state UI modifications
+        document.getElementById('reset-new-password').value = '';
+        document.getElementById('reset-confirm-password').value = '';
+        btn.style.display = 'none';
+        document.getElementById('btn-reset-back-login').style.display = 'block';
+
+        // Auto redirect after 2 seconds
+        setTimeout(() => {
+          // Verify we are still on the auth screen/overlay before redirecting
+          if (isAuthOverlayVisible()) {
+            switchAuthTab('login', { historyMode: 'replace' });
+          }
+        }, 2000);
+      } catch (err) {
+        showAuthMsg('reset-password-msg', '⚠ Server connection failed.', 'error');
+        console.error(err);
+      } finally {
+        btn.textContent = originalText;
+        if (btn.style.display !== 'none') btn.disabled = false;
+      }
+    }
+    window.handleResetPassword = handleResetPassword;
+
+    window.validatePasswordStrength = function(pw) {
+      let score = 0;
+      if (pw.length >= 8) score++;
+      if (/[A-Z]/.test(pw)) score++;
+      if (/[a-z]/.test(pw)) score++;
+      if (/[0-9]/.test(pw)) score++;
+      if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+      const bar = document.getElementById('password-strength-bar');
+      const text = document.getElementById('password-strength-text');
+      
+      let width = '0%';
+      let color = 'var(--error)';
+      let status = 'Empty';
+
+      if (pw.length > 0) {
+        if (score <= 2) {
+          width = '33%';
+          color = '#e74c3c';
+          status = 'Weak';
+        } else if (score <= 4) {
+          width = '66%';
+          color = '#f39c12';
+          status = 'Medium';
+        } else {
+          width = '100%';
+          color = 'var(--success)';
+          status = 'Strong';
+        }
+      }
+
+      bar.style.width = width;
+      bar.style.backgroundColor = color;
+      text.textContent = `Strength: ${status}`;
+    };
+
+    window.togglePasswordVisibility = function(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = 'HIDE';
+      } else {
+        input.type = 'password';
+        btn.textContent = 'SHOW';
+      }
+    };
 
     async function handleSignup() {
       const name = document.getElementById('signup-name').value.trim();
@@ -515,6 +707,14 @@
         "font-size: 12px; color: #0d1b2a;"
       );
       const initialRoute = parseRouteFromLocation();
+
+      // Check if this is a password reset URL loaded directly
+      if (initialRoute.screen === 'auth' && initialRoute.tab === 'reset-password' && initialRoute.token) {
+        SESSION.clear();
+        showResetPasswordOverlay(initialRoute.token);
+        return;
+      }
+
       const token = SESSION.get();
       if (token && isTokenValid(token)) {
         try {
@@ -543,7 +743,7 @@
     //  ROLE-BASED ACCESS
     // ══════════════════════════════════════════════════════
     const ACCESS = {
-      admin: ['dashboard', 'mentor-profile', 'objectives', 'roles', 'parameters', 'personal', 'family', 'academic-cred', 'prizes', 'academic-rec', 'participation', 'performance', 'improvement', 'interaction', 'effectiveness', 'overall-score', 'user-mgmt', 'assign-mentor', 'all-records', 'about'],
+      admin: ['dashboard', 'mentor-profile', 'objectives', 'roles', 'parameters', 'personal', 'family', 'academic-cred', 'prizes', 'academic-rec', 'participation', 'performance', 'improvement', 'interaction', 'effectiveness', 'overall-score', 'user-mgmt', 'deactivated-users', 'assign-mentor', 'all-records', 'about'],
       mentor: ['dashboard', 'mentor-profile', 'objectives', 'roles', 'parameters', 'my-students', 'about'],
       student: ['dashboard', 'objectives', 'roles', 'parameters', 'personal', 'family', 'academic-cred', 'prizes', 'academic-rec', 'participation', 'performance', 'improvement', 'interaction', 'effectiveness', 'overall-score', 'about'],
     };
@@ -803,6 +1003,7 @@
 
       // Render dynamic panels on navigate
       if (panelId === 'user-mgmt') renderUserMgmt();
+      if (panelId === 'deactivated-users') renderDeactivatedUsers();
       if (panelId === 'assign-mentor') renderAssignMentor();
       if (panelId === 'all-records') renderAllRecords(true);
       if (panelId === 'my-students') renderMyStudents(true);
@@ -817,6 +1018,253 @@
           studentId: currentUser.role !== 'student' ? (selectedStudentId || '') : '',
           studentName: currentUser.role !== 'student' ? (selectedStudentName || '') : '',
         }, historyMode);
+      }
+    }
+
+    // --- Deactivated Users State Management ---
+    let deactivatedFilterRole = '';
+    let deactivatedFilterDept = '';
+    let deactivatedSearchQuery = '';
+    let deactivatedSortOrder = 'newest';
+    let deactivatedCurrentPage = 1;
+    const deactivatedPageLimit = 8;
+
+    window.toggleDeactivateReasonTextarea = function() {
+      const type = document.getElementById('deactivate-reason-type').value;
+      const otherContainer = document.getElementById('deactivate-reason-other-container');
+      otherContainer.style.display = type === 'Other' ? 'block' : 'none';
+    };
+
+    window.closeDeactivateReasonModal = function() {
+      document.getElementById('deactivate-reason-modal').style.display = 'none';
+      document.getElementById('deactivate-target-userid').value = '';
+      document.getElementById('deactivate-target-username').value = '';
+      document.getElementById('deactivate-reason-text').value = '';
+      document.getElementById('deactivate-reason-type').value = 'Completed Course';
+      toggleDeactivateReasonTextarea();
+    };
+
+    window.submitDeactivateUser = async function() {
+      const userId = document.getElementById('deactivate-target-userid').value;
+      const reasonType = document.getElementById('deactivate-reason-type').value;
+      const reasonText = document.getElementById('deactivate-reason-text').value.trim();
+
+      if (reasonType === 'Other' && !reasonText) {
+        alert('Please specify the reason.');
+        return;
+      }
+
+      try {
+        const { ok, data } = await api('PATCH', `/users/admin/users/${userId}/deactivate`, {
+          reasonType,
+          reason: reasonText,
+        });
+
+        if (!ok) throw new Error(data.message || 'Deactivation failed.');
+        
+        closeDeactivateReasonModal();
+        alert('User deactivated successfully.');
+        
+        // Refresh User Management list
+        if (getActivePanelId() === 'user-mgmt') {
+          renderUserMgmt();
+        }
+      } catch (err) {
+        alert('❌ ' + err.message);
+      }
+    };
+
+    // Override deactivateUser to show modal
+    window.deactivateUser = function(userId, name) {
+      document.getElementById('deactivate-target-userid').value = userId;
+      document.getElementById('deactivate-target-username').value = name;
+      document.getElementById('deactivate-reason-modal').style.display = 'flex';
+      toggleDeactivateReasonTextarea();
+    };
+
+    window.restoreUser = async function(userId, name) {
+      if (!confirm(`Restore this user?\n\nRestore: ${name}\n\nCancel | Activate`)) return;
+      try {
+        const { ok, data } = await api('PATCH', `/users/admin/users/${userId}/activate`);
+        if (!ok) throw new Error(data.message || 'Activation failed.');
+        alert('User activated successfully!');
+        renderDeactivatedUsers();
+      } catch (err) {
+        alert('❌ ' + err.message);
+      }
+    };
+
+    window.changeDeactivatedFilter = function(key, val) {
+      if (key === 'role') deactivatedFilterRole = val;
+      if (key === 'dept') deactivatedFilterDept = val;
+      if (key === 'search') deactivatedSearchQuery = val;
+      if (key === 'sort') deactivatedSortOrder = val;
+      deactivatedCurrentPage = 1;
+      renderDeactivatedUsers();
+    };
+
+    window.changeDeactivatedPage = function(page) {
+      deactivatedCurrentPage = page;
+      renderDeactivatedUsers();
+    };
+
+    async function renderDeactivatedUsers() {
+      const container = document.getElementById('deactivated-users-content');
+      if (!container) return;
+
+      container.innerHTML = `
+        <div class="card">
+          <div class="card-body" style="text-align:center;color:var(--text-muted);padding:40px;">
+            <div style="font-size:24px;margin-bottom:12px;">⏳</div>
+            <div>Loading deactivated accounts...</div>
+          </div>
+        </div>`;
+
+      try {
+        const queryParams = new URLSearchParams({
+          search: deactivatedSearchQuery,
+          role: deactivatedFilterRole,
+          department: deactivatedFilterDept,
+          sort: deactivatedSortOrder,
+          page: deactivatedCurrentPage,
+          limit: deactivatedPageLimit
+        });
+
+        const { ok, data } = await api('GET', `/users/admin/deactivated-users?${queryParams.toString()}`);
+        if (!ok) throw new Error(data.message || 'Failed to load deactivated users');
+
+        const users = data.users || [];
+        const total = data.total || 0;
+        const totalPages = Math.ceil(total / deactivatedPageLimit) || 1;
+
+        let tableRows = '';
+        if (users.length === 0) {
+          tableRows = `
+            <tr>
+              <td colspan="12" style="text-align:center;padding:48px var(--card-padding);color:var(--text-muted);">
+                <div style="font-size:32px;margin-bottom:12px;">🔍</div>
+                <div style="font-weight:600;font-size:15px;color:var(--text);">No Deactivated Users Found</div>
+                <div style="font-size:13px;margin-top:4px;">Try adjusting your filters or search terms.</div>
+              </td>
+            </tr>`;
+        } else {
+          tableRows = users.map(u => {
+            const avatarHtml = u.photoUrl
+              ? `<div style="width:36px;height:36px;border-radius:50%;background-image:url('${u.photoUrl}');background-size:cover;background-position:center;border:1.5px solid var(--border);"></div>`
+              : `<div style="width:36px;height:36px;border-radius:50%;background:var(--cream);color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;border:1.5px solid var(--border);">${u.name.charAt(0).toUpperCase()}</div>`;
+
+            return `
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:10px;">
+                    ${avatarHtml}
+                    <div style="font-weight:600;color:var(--text);">${u.name}</div>
+                  </div>
+                </td>
+                <td style="font-size:13px;">${u.email}</td>
+                <td><span class="tag ${u.role === 'admin' ? 'tag-excellent' : u.role === 'mentor' ? 'tag-good' : 'tag-average'}">${u.role.toUpperCase()}</span></td>
+                <td>${u.department || '<span style="color:var(--text-muted);">—</span>'}</td>
+                <td>${u.registrationNo || '<span style="color:var(--text-muted);">—</span>'}</td>
+                <td>${u.phone || '<span style="color:var(--text-muted);">—</span>'}</td>
+                <td style="font-size:12px;color:var(--text-muted);">${new Date(u.createdAt).toLocaleDateString()}</td>
+                <td style="font-size:12px;color:var(--text-muted);">${new Date(u.deactivatedAt).toLocaleDateString()}</td>
+                <td style="font-size:12px;">
+                  <div style="font-weight:600;">${u.deactivatedBy ? u.deactivatedBy.name : 'Admin'}</div>
+                  <div style="font-size:10px;color:var(--text-muted);">${u.deactivatedBy ? u.deactivatedBy.email : ''}</div>
+                </td>
+                <td style="font-size:12px;">
+                  <span style="font-weight:600;color:var(--error);">${u.deactivationReasonType}</span>
+                  ${u.deactivationReason ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${u.deactivationReason}">${u.deactivationReason}</div>` : ''}
+                </td>
+                <td><span class="tag" style="background:#fde8e8;color:#e02424;border:1px solid #fbd5d5;font-weight:600;font-size:11px;">DEACTIVATED</span></td>
+                <td>
+                  <button onclick="restoreUser('${u.id}','${u.name.replace(/'/g, "\\'")}')" class="btn-action" style="padding:6px 14px;background:var(--success);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:600;">Activate</button>
+                </td>
+              </tr>`;
+          }).join('');
+        }
+
+        // Pagination buttons
+        let paginationHtml = '';
+        if (totalPages > 1) {
+          paginationHtml = `
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+              <div style="font-size:13px;color:var(--text-muted);">Showing page ${deactivatedCurrentPage} of ${totalPages}</div>
+              <div style="display:flex;gap:6px;">
+                <button onclick="changeDeactivatedPage(${deactivatedCurrentPage - 1})" ${deactivatedCurrentPage === 1 ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''} class="btn-info-action" style="padding:6px 12px;font-size:12px;">Previous</button>
+                ${Array.from({ length: totalPages }).map((_, idx) => `
+                  <button onclick="changeDeactivatedPage(${idx + 1})" class="btn-info-action" style="padding:6px 12px;font-size:12px;font-weight:600;${deactivatedCurrentPage === idx + 1 ? 'background:var(--navy);color:var(--gold);border-color:var(--navy);' : ''}">${idx + 1}</button>
+                `).join('')}
+                <button onclick="changeDeactivatedPage(${deactivatedCurrentPage + 1})" ${deactivatedCurrentPage === totalPages ? 'disabled style="opacity:0.5;cursor:not-allowed;"' : ''} class="btn-info-action" style="padding:6px 12px;font-size:12px;">Next</button>
+              </div>
+            </div>`;
+        }
+
+        container.innerHTML = `
+          <div class="card" style="margin-bottom:20px;">
+            <div class="card-body" style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+              <div style="flex:1;min-width:200px;position:relative;">
+                <input type="text" placeholder="Search by name, email, registration..." value="${deactivatedSearchQuery}" oninput="changeDeactivatedFilter('search', this.value)" style="width:100%;padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;outline:none;">
+              </div>
+              <select onchange="changeDeactivatedFilter('role', this.value)" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;background:var(--bg-panel);color:var(--text);outline:none;">
+                <option value="">All Roles</option>
+                <option value="student" ${deactivatedFilterRole === 'student' ? 'selected' : ''}>Student</option>
+                <option value="mentor" ${deactivatedFilterRole === 'mentor' ? 'selected' : ''}>Mentor</option>
+                <option value="admin" ${deactivatedFilterRole === 'admin' ? 'selected' : ''}>Admin</option>
+              </select>
+              <select onchange="changeDeactivatedFilter('dept', this.value)" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;background:var(--bg-panel);color:var(--text);outline:none;">
+                <option value="">All Departments</option>
+                <option value="CSE" ${deactivatedFilterDept === 'CSE' ? 'selected' : ''}>CSE</option>
+                <option value="IT" ${deactivatedFilterDept === 'IT' ? 'selected' : ''}>IT</option>
+                <option value="Civil" ${deactivatedFilterDept === 'Civil' ? 'selected' : ''}>Civil</option>
+                <option value="Mechanical" ${deactivatedFilterDept === 'Mechanical' ? 'selected' : ''}>Mechanical</option>
+                <option value="Electrical" ${deactivatedFilterDept === 'Electrical' ? 'selected' : ''}>Electrical</option>
+                <option value="AI/ML" ${deactivatedFilterDept === 'AI/ML' ? 'selected' : ''}>AI/ML</option>
+              </select>
+              <select onchange="changeDeactivatedFilter('sort', this.value)" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;background:var(--bg-panel);color:var(--text);outline:none;">
+                <option value="newest" ${deactivatedSortOrder === 'newest' ? 'selected' : ''}>Newest First</option>
+                <option value="oldest" ${deactivatedSortOrder === 'oldest' ? 'selected' : ''}>Oldest First</option>
+              </select>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Deactivated Users (${total})</span>
+            </div>
+            <div class="card-body">
+              <div class="table-wrap">
+                <table style="width:100%;min-width:1100px;">
+                  <thead>
+                    <tr>
+                      <th>Full Name</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Department</th>
+                      <th>Registration No</th>
+                      <th>Phone</th>
+                      <th>Date Joined</th>
+                      <th>Deactivated Date</th>
+                      <th>Deactivated By</th>
+                      <th>Reason</th>
+                      <th>Status Badge</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${tableRows}
+                  </tbody>
+                </table>
+              </div>
+              ${paginationHtml}
+            </div>
+          </div>`;
+      } catch (err) {
+        container.innerHTML = `
+          <div class="card">
+            <div class="card-body" style="color:var(--error);padding:20px;">
+              &#10060; Failed to load deactivated users: ${err.message}
+            </div>
+          </div>`;
       }
     }
 
@@ -2101,31 +2549,70 @@
     </div>`;
     }
 
-    async function renderUserMgmt() {
-      document.getElementById('user-mgmt-content').innerHTML = `
-    <div class="card"><div class="card-body" style="text-align:center;color:var(--text-muted);padding:30px;">⏳ Loading users from database...</div></div>`;
+    let userMgmtSearchQuery = '';
+    let userMgmtSearchTimeout = null;
+
+    window.handleUserMgmtSearch = function(val) {
+      userMgmtSearchQuery = val;
+      if (userMgmtSearchTimeout) clearTimeout(userMgmtSearchTimeout);
+      userMgmtSearchTimeout = setTimeout(() => {
+        renderUserMgmt(true); // pass true to preserve input focus / prevent full container flash
+      }, 300);
+    };
+
+    async function renderUserMgmt(isSubsequent = false) {
+      if (!isSubsequent) {
+        document.getElementById('user-mgmt-content').innerHTML = `
+      <div class="card"><div class="card-body" style="text-align:center;color:var(--text-muted);padding:30px;">⏳ Loading users from database...</div></div>`;
+      }
 
       try {
-        const { ok, data } = await api('GET', '/users');
+        const path = userMgmtSearchQuery 
+          ? `/users?search=${encodeURIComponent(userMgmtSearchQuery)}`
+          : '/users';
+
+        const { ok, data } = await api('GET', path);
         if (!ok) throw new Error(data.message || 'Failed to load users');
         allUsers = data.users || [];
         const currentUserId = String(currentUser?._id || currentUser?.id || '');
 
-        const rows = allUsers.map(u => `
-      <tr>
-        <td style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text-muted);">${u._id.slice(-8)}</td>
-        <td><strong>${u.name}</strong></td>
-        <td>${u.email}</td>
-        <td><span class="tag ${u.role === 'admin' ? 'tag-excellent' : u.role === 'mentor' ? 'tag-good' : 'tag-average'}">${u.role.toUpperCase()}</span></td>
-        <td style="font-size:11px;">${u.lastLogin ? new Date(u.lastLogin).toLocaleString() : '<span style="color:var(--text-muted);">Never</span>'}</td>
-        <td>
-          ${String(u._id) !== currentUserId
-            ? `<button onclick="deactivateUser('${u._id}','${u.name.replace(/'/g, "\\'")}')" style="border:none;background:#c0392b;color:#fff;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:12px;">Deactivate</button>`
-            : '<span style="font-size:11px;color:var(--text-muted);">(you)</span>'}
-        </td>
-      </tr>`).join('');
+        let rows = '';
+        if (allUsers.length === 0) {
+          rows = `
+        <tr>
+          <td colspan="6" style="text-align:center;padding:48px var(--card-padding);color:var(--text-muted);">
+            <div style="font-size:32px;margin-bottom:12px;">🔍</div>
+            <div style="font-weight:600;font-size:15px;color:var(--text);">No Users Found</div>
+            <div style="font-size:13px;margin-top:4px;">Try searching for a different name, email, role, or department.</div>
+          </td>
+        </tr>`;
+        } else {
+          rows = allUsers.map(u => `
+        <tr>
+          <td style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text-muted);">${u._id.slice(-8)}</td>
+          <td><strong>${u.name}</strong></td>
+          <td>${u.email}</td>
+          <td><span class="tag ${u.role === 'admin' ? 'tag-excellent' : u.role === 'mentor' ? 'tag-good' : 'tag-average'}">${u.role.toUpperCase()}</span></td>
+          <td style="font-size:11px;">${u.lastLogin ? new Date(u.lastLogin).toLocaleString() : '<span style="color:var(--text-muted);">Never</span>'}</td>
+          <td>
+            ${String(u._id) !== currentUserId
+              ? `<button onclick="deactivateUser('${u._id}','${u.name.replace(/'/g, "\\'")}')" style="border:none;background:#c0392b;color:#fff;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:12px;">Deactivate</button>`
+              : '<span style="font-size:11px;color:var(--text-muted);">(you)</span>'}
+          </td>
+        </tr>`).join('');
+        }
 
-        document.getElementById('user-mgmt-content').innerHTML = `
+        const inputHtml = `
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-body" style="display:flex;gap:12px;align-items:center;">
+            <div style="flex:1;position:relative;display:flex;align-items:center;">
+              <span style="position:absolute;left:14px;color:var(--text-muted);font-size:14px;">🔍</span>
+              <input type="text" id="user-mgmt-search-input" placeholder="Search by name, email, registration number, phone, role, or department..." value="${userMgmtSearchQuery}" oninput="handleUserMgmtSearch(this.value)" style="width:100%;padding:10px 12px 10px 38px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;outline:none;background:var(--bg-panel);color:var(--text);">
+            </div>
+          </div>
+        </div>`;
+
+        const tableHtml = `
       <div class="card">
         <div class="card-header">
           <span class="card-title">All Users (${allUsers.length})</span>
@@ -2140,6 +2627,17 @@
           </div>
         </div>
       </div>`;
+
+        document.getElementById('user-mgmt-content').innerHTML = inputHtml + tableHtml;
+
+        // Restore cursor position if user is typing
+        if (isSubsequent) {
+          const input = document.getElementById('user-mgmt-search-input');
+          if (input) {
+            input.focus();
+            input.setSelectionRange(userMgmtSearchQuery.length, userMgmtSearchQuery.length);
+          }
+        }
       } catch (err) {
         document.getElementById('user-mgmt-content').innerHTML = `
       <div class="card"><div class="card-body" style="color:var(--error);padding:20px;">&#10060; Failed to load users: ${err.message}</div></div>`;

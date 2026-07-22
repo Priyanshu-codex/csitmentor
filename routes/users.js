@@ -10,8 +10,65 @@ router.use(protect);
 // ── GET /api/users — list all users (admin only) ─────────────────────────────
 router.get('/', authorize('admin'), async (req, res) => {
   try {
-    const users = await User.find({ isActive: true }).select('-password').sort({ createdAt: -1 });
-    res.json({ status: 'success', count: users.length, users });
+    const { search } = req.query;
+
+    if (!search) {
+      const users = await User.find({ isActive: true }).select('-password').sort({ createdAt: -1 });
+      return res.json({ status: 'success', count: users.length, users });
+    }
+
+    const regex = new RegExp(search, 'i');
+
+    // First search in User collection
+    const userQuery = {
+      isActive: true,
+      $or: [
+        { name: regex },
+        { email: regex },
+        { role: regex }
+      ]
+    };
+
+    let matchedUsers = await User.find(userQuery).select('-password').sort({ createdAt: -1 });
+
+    // Look for registration numbers, departments or branches, and cell phone numbers in student and mentor records
+    const { StudentRecord, MentorRecord } = require('../models/Record');
+
+    const [matchedStudentRecs, matchedMentorRecs] = await Promise.all([
+      StudentRecord.find({
+        $or: [
+          { 'personal.registrationNo': regex },
+          { 'personal.branch': regex },
+          { 'personal.personalCell': regex }
+        ]
+      }).select('student'),
+      MentorRecord.find({
+        $or: [
+          { 'profile.department': regex },
+          { 'profile.contact': regex }
+        ]
+      }).select('mentor')
+    ]);
+
+    const extraUserIds = [
+      ...matchedStudentRecs.map(rec => rec.student),
+      ...matchedMentorRecs.map(rec => rec.mentor)
+    ];
+
+    if (extraUserIds.length > 0) {
+      const extraUsers = await User.find({
+        _id: { $in: extraUserIds },
+        isActive: true
+      }).select('-password');
+
+      // Merge and remove duplicates
+      const mergedMap = new Map();
+      matchedUsers.forEach(u => mergedMap.set(u._id.toString(), u));
+      extraUsers.forEach(u => mergedMap.set(u._id.toString(), u));
+      matchedUsers = Array.from(mergedMap.values()).sort((a, b) => b.createdAt - a.createdAt);
+    }
+
+    res.json({ status: 'success', count: matchedUsers.length, users: matchedUsers });
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: 'error', message: 'Failed to fetch users.' });
@@ -99,12 +156,208 @@ router.delete('/:id', authorize('admin'), async (req, res) => {
     if (req.user._id.toString() === req.params.id) {
       return res.status(400).json({ status: 'error', message: 'You cannot deactivate your own account.' });
     }
-    const user = await User.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
+    const user = await User.findByIdAndUpdate(req.params.id, {
+      isActive: false,
+      deactivatedAt: new Date(),
+      deactivatedBy: req.user._id,
+    }, { new: true });
     if (!user) return res.status(404).json({ status: 'error', message: 'User not found.' });
     res.json({ status: 'success', message: 'User deactivated successfully.' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ status: 'error', message: 'Failed to deactivate user.' });
+  }
+});
+
+// ── PATCH /api/users/admin/users/:id/deactivate (admin only) ─────────────────────────
+router.patch('/admin/users/:id/deactivate', authorize('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reasonType, reason } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ status: 'error', message: 'Invalid user ID.' });
+    }
+    if (req.user._id.toString() === id) {
+      return res.status(400).json({ status: 'error', message: 'You cannot deactivate your own account.' });
+    }
+
+    const updates = {
+      isActive: false,
+      deactivatedAt: new Date(),
+      deactivatedBy: req.user._id,
+      deactivationReasonType: reasonType || 'Other',
+      deactivationReason: reason || '',
+    };
+
+    const user = await User.findByIdAndUpdate(id, updates, { new: true });
+    if (!user) return res.status(404).json({ status: 'error', message: 'User not found.' });
+
+    res.json({ status: 'success', message: 'User deactivated successfully.', user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: 'error', message: 'Failed to deactivate user.' });
+  }
+});
+
+// ── PATCH /api/users/admin/users/:id/activate (admin only) ───────────────────────────
+router.patch('/admin/users/:id/activate', authorize('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ status: 'error', message: 'Invalid user ID.' });
+    }
+
+    const updates = {
+      isActive: true,
+      activatedAt: new Date(),
+      activatedBy: req.user._id,
+    };
+
+    const user = await User.findByIdAndUpdate(id, updates, { new: true });
+    if (!user) return res.status(404).json({ status: 'error', message: 'User not found.' });
+
+    res.json({ status: 'success', message: 'User activated successfully.', user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: 'error', message: 'Failed to activate user.' });
+  }
+});
+
+// ── GET /api/admin/deactivated-users (admin only) ──────────────────────────────
+router.get('/admin/deactivated-users', authorize('admin'), async (req, res) => {
+  try {
+    const { search, role, department, sort, page = 1, limit = 10 } = req.query;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Initial filter for inactive users
+    const filter = { isActive: false };
+
+    if (role) {
+      filter.role = role;
+    }
+
+    // Resolve users matching textual search (name, email)
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    // Determine sort order
+    let sortObj = { deactivatedAt: -1 };
+    if (sort === 'oldest') {
+      sortObj = { deactivatedAt: 1 };
+    }
+
+    // Retrieve inactive users matching search and role filter
+    let users = await User.find(filter)
+      .populate('deactivatedBy', 'name email')
+      .populate('activatedBy', 'name email')
+      .sort(sortObj);
+
+    // Fetch related records (Student/Mentor) to check branch/department, registration number, etc.
+    const { StudentRecord, MentorRecord } = require('../models/Record');
+    
+    // We need to filter and augment the list with student/mentor details
+    let augmentedUsers = [];
+
+    for (let u of users) {
+      let dept = '';
+      let regNo = '';
+      let phone = '';
+      let photoUrl = '';
+
+      if (u.role === 'student') {
+        const studRec = await StudentRecord.findOne({ student: u._id });
+        if (studRec && studRec.personal) {
+          dept = studRec.personal.branch || '';
+          regNo = studRec.personal.registrationNo || '';
+          phone = studRec.personal.personalCell || '';
+          photoUrl = studRec.personal.photoUrl || '';
+        }
+      } else if (u.role === 'mentor') {
+        const mentRec = await MentorRecord.findOne({ mentor: u._id });
+        if (mentRec && mentRec.profile) {
+          dept = mentRec.profile.department || '';
+          phone = mentRec.profile.contact || '';
+        }
+      }
+
+      augmentedUsers.push({
+        id: u._id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        createdAt: u.createdAt,
+        deactivatedAt: u.deactivatedAt,
+        deactivatedBy: u.deactivatedBy ? { name: u.deactivatedBy.name, email: u.deactivatedBy.email } : null,
+        deactivationReasonType: u.deactivationReasonType || '',
+        deactivationReason: u.deactivationReason || '',
+        department: dept,
+        registrationNo: regNo,
+        phone: phone,
+        photoUrl: photoUrl,
+      });
+    }
+
+    // Apply department filter in memory if specified
+    if (department) {
+      augmentedUsers = augmentedUsers.filter(u => u.department.toLowerCase().includes(department.toLowerCase()));
+    }
+
+    // Apply registration number search if search did not find it in user table but could match registrationNo
+    if (search && augmentedUsers.length === 0) {
+      // Let's do a search on registration number directly in StudentRecord
+      const matchingStudRecs = await StudentRecord.find({
+        'personal.registrationNo': { $regex: search, $options: 'i' }
+      });
+      const studentIds = matchingStudRecs.map(r => r.student.toString());
+      
+      // Query inactive users again using these IDs
+      const regFilteredUsers = await User.find({ _id: { $in: studentIds }, isActive: false })
+        .populate('deactivatedBy', 'name email')
+        .populate('activatedBy', 'name email')
+        .sort(sortObj);
+
+      augmentedUsers = [];
+      for (let u of regFilteredUsers) {
+        const studRec = matchingStudRecs.find(r => r.student.toString() === u._id.toString());
+        augmentedUsers.push({
+          id: u._id,
+          name: u.name,
+          email: u.email,
+          role: u.role,
+          createdAt: u.createdAt,
+          deactivatedAt: u.deactivatedAt,
+          deactivatedBy: u.deactivatedBy ? { name: u.deactivatedBy.name, email: u.deactivatedBy.email } : null,
+          deactivationReasonType: u.deactivationReasonType || '',
+          deactivationReason: u.deactivationReason || '',
+          department: studRec?.personal?.branch || '',
+          registrationNo: studRec?.personal?.registrationNo || '',
+          phone: studRec?.personal?.personalCell || '',
+          photoUrl: studRec?.personal?.photoUrl || '',
+        });
+      }
+    }
+
+    // Pagination
+    const total = augmentedUsers.length;
+    const paginatedUsers = augmentedUsers.slice(skip, skip + parseInt(limit));
+
+    res.json({
+      status: 'success',
+      total,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      users: paginatedUsers,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ status: 'error', message: 'Failed to fetch deactivated users.' });
   }
 });
 

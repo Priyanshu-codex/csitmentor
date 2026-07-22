@@ -481,8 +481,10 @@
               <label>Password</label>
               <input type="password" id="login-password" placeholder="Enter your secure password"
                 onkeydown="if(event.key==='Enter') handleLogin()">
-              <p class="input-hint">Session tokens remain active for 24 hours and the system logs out automatically on
-                expiry.</p>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+                <p class="input-hint" style="margin:0;">Session tokens remain active for 24 hours.</p>
+                <a href="#" onclick="event.preventDefault(); showForgotOverlay();" style="color:var(--gold);font-size:12px;font-weight:600;text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='var(--gold-light)'" onmouseout="this.style.color='var(--gold)'">Forgot Password?</a>
+              </div>
             </div>
             <button class="btn-primary" onclick="handleLogin()">Secure Sign In</button>
 
@@ -530,6 +532,53 @@
               <input type="password" id="mentor-key" placeholder="Enter mentor key">
             </div>
             <button class="btn-primary" onclick="handleSignup()">Create Account</button>
+          </div>
+
+          <!-- FORGOT PASSWORD -->
+          <div id="forgot-panel" class="auth-panel" style="display:none;">
+            <div class="auth-panel-head">
+              <div class="auth-panel-kicker">Recover Password</div>
+              <div class="auth-panel-title">Forgot your account password?</div>
+              <div class="auth-panel-text">Enter your registered email address below. If the account exists, we will email you a secure link to reset your password.</div>
+            </div>
+            <div id="forgot-msg" class="auth-msg"></div>
+            <div class="form-group">
+              <label>Email Address</label>
+              <input type="email" id="forgot-email" placeholder="you@csit.edu.in" onkeydown="if(event.key==='Enter') handleForgotPassword()">
+            </div>
+            <button class="btn-primary" id="btn-forgot-submit" onclick="handleForgotPassword()">Send Reset Link</button>
+            <button class="landing-btn landing-btn-ghost" style="margin-top:12px;width:100%;" onclick="switchAuthTab('login')">← Back to Sign In</button>
+          </div>
+
+          <!-- RESET PASSWORD -->
+          <div id="reset-password-panel" class="auth-panel" style="display:none;">
+            <div class="auth-panel-head">
+              <div class="auth-panel-kicker">New Credentials</div>
+              <div class="auth-panel-title">Reset your account password</div>
+              <div class="auth-panel-text">Set a secure password for your workspace access. Must contain at least 8 characters with 1 uppercase, 1 lowercase, 1 number, and 1 special character.</div>
+            </div>
+            <div id="reset-password-msg" class="auth-msg"></div>
+            <input type="hidden" id="reset-token-value">
+            <div class="form-group">
+              <label>New Password</label>
+              <div style="position:relative;display:flex;align-items:center;">
+                <input type="password" id="reset-new-password" placeholder="Enter new password" style="width:100%;padding-right:45px;" oninput="validatePasswordStrength(this.value)">
+                <button type="button" onclick="togglePasswordVisibility('reset-new-password', this)" style="position:absolute;right:12px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;font-weight:600;outline:none;">SHOW</button>
+              </div>
+              <div id="password-strength-indicator" style="margin-top:6px;height:4px;width:100%;background:#e1e8ed;border-radius:2px;overflow:hidden;">
+                <div id="password-strength-bar" style="height:100%;width:0;background:var(--error);transition:width 0.2s, background-color 0.2s;"></div>
+              </div>
+              <p id="password-strength-text" style="font-size:11px;color:var(--text-muted);margin-top:4px;">Strength: Empty</p>
+            </div>
+            <div class="form-group">
+              <label>Confirm Password</label>
+              <div style="position:relative;display:flex;align-items:center;">
+                <input type="password" id="reset-confirm-password" placeholder="Re-enter new password" style="width:100%;padding-right:45px;">
+                <button type="button" onclick="togglePasswordVisibility('reset-confirm-password', this)" style="position:absolute;right:12px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:12px;font-weight:600;outline:none;">SHOW</button>
+              </div>
+            </div>
+            <button class="btn-primary" id="btn-reset-submit" onclick="handleResetPassword()">Update Password</button>
+            <button class="landing-btn landing-btn-ghost" id="btn-reset-back-login" style="margin-top:12px;width:100%;display:none;" onclick="switchAuthTab('login')">← Back to Sign In</button>
           </div>
 
         </div>
@@ -617,6 +666,7 @@
           <div class="sidebar-section-label">Admin</div>
           <button class="nav-item" id="nav-user-mgmt" onclick="navigate('user-mgmt')"><span class="icon">⚙️</span> User
             Management</button>
+          <button class="nav-item" id="nav-deactivated-users" onclick="navigate('deactivated-users')"><span class="icon">🚫</span> Deactivated Users</button>
           <button class="nav-item" id="nav-assign-mentor" onclick="navigate('assign-mentor')"><span
               class="icon">🔗</span> Assign Mentors</button>
           <button class="nav-item" id="nav-all-records" onclick="navigate('all-records')"><span class="icon">📂</span>
@@ -968,6 +1018,48 @@
             <div class="page-subtitle">Admin Control Panel — Manage All Users</div>
           </div>
           <div id="user-mgmt-content"></div>
+        </div>
+
+        <!-- ═══ DEACTIVATED USERS PANEL (Admin only) ═══ -->
+        <div id="panel-deactivated-users" class="panel">
+          <div class="page-header">
+            <div>
+              <div class="page-title">Deactivated Users</div>
+              <div class="page-subtitle">Admin Control Panel — Restore & Manage Deactivated User Accounts</div>
+            </div>
+          </div>
+          <div id="deactivated-users-content"></div>
+        </div>
+
+        <!-- ═══ DEACTIVATION REASON MODAL ═══ -->
+        <div id="deactivate-reason-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(13,27,42,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;">
+          <div style="background:var(--white);border-radius:16px;width:100%;max-width:480px;box-shadow:var(--shadow-lg);overflow:hidden;">
+            <div style="background:linear-gradient(135deg,#c0392b,#962d22);padding:20px 24px;display:flex;align-items:center;justify-content:between;color:#fff;">
+              <div>
+                <div style="font-size:18px;font-weight:700;">Deactivate User</div>
+                <div style="font-size:12px;margin-top:2px;opacity:0.8;">Specify reason for deactivation</div>
+              </div>
+              <button onclick="closeDeactivateReasonModal()" style="margin-left:auto;background:rgba(255,255,255,0.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:18px;line-height:1;">×</button>
+            </div>
+            <div style="padding:20px 24px;">
+              <input type="hidden" id="deactivate-target-userid">
+              <input type="hidden" id="deactivate-target-username">
+              <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:8px;">REASON CATEGORY</label>
+              <select id="deactivate-reason-type" onchange="toggleDeactivateReasonTextarea()" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;background:var(--bg-panel);color:var(--text);margin-bottom:16px;outline:none;">
+                <option value="Completed Course">Completed Course</option>
+                <option value="Duplicate Account">Duplicate Account</option>
+                <option value="Other">Other</option>
+              </select>
+              <div id="deactivate-reason-other-container" style="display:none;margin-bottom:16px;">
+                <label style="font-size:12px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:8px;">SPECIFY REASON</label>
+                <textarea id="deactivate-reason-text" rows="3" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:14px;resize:vertical;" placeholder="Describe the reason for deactivation..."></textarea>
+              </div>
+            </div>
+            <div style="padding:16px 24px;background:var(--cream);border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;">
+              <button onclick="closeDeactivateReasonModal()" style="padding:10px 20px;border:1px solid var(--border);background:var(--white);border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Cancel</button>
+              <button onclick="submitDeactivateUser()" style="padding:10px 24px;background:#c0392b;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;">Deactivate</button>
+            </div>
+          </div>
         </div>
 
 
