@@ -16,11 +16,15 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const User     = require('../models/User');
 
-// ── Seed data — change these before running ──────────────────────────────────
+if (!process.env.ADMIN_PASSWORD || !process.env.ADMIN_PASSWORD.trim()) {
+  console.error('❌ CRITICAL: ADMIN_PASSWORD environment variable is required to run the seed script.');
+  process.exit(1);
+}
+
 const SEED_ADMIN = {
   name:     process.env.ADMIN_NAME || 'System Administrator',
   email:    process.env.ADMIN_EMAIL || 'admin@csit.edu.in',
-  password: process.env.ADMIN_PASSWORD || 'Admin@2024',        // Will be hashed by the User pre-save hook
+  password: process.env.ADMIN_PASSWORD.trim(),
   role:     'admin',
 };
 

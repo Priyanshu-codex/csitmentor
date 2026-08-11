@@ -207,6 +207,13 @@ router.patch('/:studentId/:section', async (req, res) => {
       return res.status(400).json({ status: 'error', message: 'Request body must include a "data" field.' });
     }
 
+    // 3b. Base64 payload validation for personal section photo
+    if (section === 'personal' && req.body.data && req.body.data.photoUrl) {
+      if (typeof req.body.data.photoUrl === 'string' && req.body.data.photoUrl.length > 150000) {
+        return res.status(400).json({ status: 'error', message: 'Profile photo exceeds the maximum allowed size (100KB).' });
+      }
+    }
+
     // 4. Resolve and validate studentId
     const sid = resolveStudentId(req);
     if (!sid) {
