@@ -1220,6 +1220,7 @@
                 <option value="Mechanical" ${deactivatedFilterDept === 'Mechanical' ? 'selected' : ''}>Mechanical</option>
                 <option value="Electrical" ${deactivatedFilterDept === 'Electrical' ? 'selected' : ''}>Electrical</option>
                 <option value="AI/ML" ${deactivatedFilterDept === 'AI/ML' ? 'selected' : ''}>AI/ML</option>
+                <option value="AIDS" ${deactivatedFilterDept === 'AIDS' ? 'selected' : ''}>AIDS</option>
               </select>
               <select onchange="changeDeactivatedFilter('sort', this.value)" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;background:var(--bg-panel);color:var(--text);outline:none;">
                 <option value="newest" ${deactivatedSortOrder === 'newest' ? 'selected' : ''}>Newest First</option>
@@ -2000,6 +2001,7 @@
                 <option value="Mechanical">Mechanical Engineering</option>
                 <option value="Electrical">Electrical Engineering</option>
                 <option value="AI/ML">Artificial Intelligence &amp; Machine Learning (AI/ML)</option>
+                <option value="AIDS">Artificial Intelligence &amp; Data Science (AIDS)</option>
                 <option value="Mechatronics">Mechatronics Engineering</option>
                 <option value="EEE">Electrical &amp; Electronics Engineering (EEE)</option>
                 <option value="ECE">Electronics &amp; Telecommunication Engineering (ECE)</option>
@@ -2836,6 +2838,7 @@
         ['Mechanical', 'Mechanical Engineering'],
         ['Electrical', 'Electrical Engineering'],
         ['AI/ML', 'AI/ML – Artificial Intelligence & Machine Learning'],
+        ['AIDS', 'AIDS – Artificial Intelligence & Data Science'],
         ['Mechatronics', 'Mechatronics Engineering'],
         ['EEE', 'EEE – Electrical & Electronics Engineering'],
         ['ECE', 'ECE – Electronics & Telecommunication Engineering'],
@@ -2963,7 +2966,7 @@
       // Branch label map
       const BRANCH_LABELS = {
         'CSE': 'CSE', 'IT': 'IT', 'Civil': 'Civil', 'Mechanical': 'Mech',
-        'Electrical': 'Elec', 'AI/ML': 'AI/ML', 'Mechatronics': 'Mecha',
+        'Electrical': 'Elec', 'AI/ML': 'AI/ML', 'AIDS': 'AIDS', 'Mechatronics': 'Mecha',
         'EEE': 'EEE', 'ECE': 'ECE'
       };
 
@@ -3089,7 +3092,7 @@
 
       const BRANCH_LABELS = {
         'CSE': 'CSE', 'IT': 'IT', 'Civil': 'Civil', 'Mechanical': 'Mech',
-        'Electrical': 'Elec', 'AI/ML': 'AI/ML', 'Mechatronics': 'Mecha',
+        'Electrical': 'Elec', 'AI/ML': 'AI/ML', 'AIDS': 'AIDS', 'Mechatronics': 'Mecha',
         'EEE': 'EEE', 'ECE': 'ECE'
       };
 
