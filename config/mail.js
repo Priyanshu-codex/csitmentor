@@ -14,5 +14,6 @@ const transporter = nodemailer.createTransport(mailConfig);
 
 module.exports = {
   transporter,
-  fromEmail: process.env.MAIL_FROM || 'priyanshumahobia22@gmail.com',
+  fromEmail: process.env.MAIL_FROM || 'noreply@csitdurg.in',
 };
+

@@ -3,7 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const validator = require('validator');
 const User = require('../models/User');
-const { protect } = require('../middleware/auth');
+const { protect, authorize } = require('../middleware/auth');
 const {
   AuthConfigError,
   ONE_DAY_MS,
@@ -289,8 +289,8 @@ router.post('/reset-password/:token', async (req, res) => {
   }
 });
 
-// ── GET /api/auth/test-email ──────────────────────────────────────────────────
-router.get('/test-email', async (req, res) => {
+// ── GET /api/auth/test-email (admin only) ─────────────────────────────────────
+router.get('/test-email', protect, authorize('admin'), async (req, res) => {
   try {
     const { sendEmail } = require('../services/email.service');
     await sendEmail({

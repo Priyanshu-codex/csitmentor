@@ -197,6 +197,11 @@ const studentRecordSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Additive indexes for quick search and query performance
+studentRecordSchema.index({ 'personal.branch': 1 });
+studentRecordSchema.index({ 'personal.registrationNo': 1 });
+studentRecordSchema.index({ 'personal.personalCell': 1 });
+
 // ── Mentor Profile record (one per mentor user) ───────────────────────────────
 const mentorRecordSchema = new mongoose.Schema(
   {

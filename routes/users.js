@@ -259,20 +259,28 @@ router.get('/admin/deactivated-users', authorize('admin'), async (req, res) => {
       .populate('activatedBy', 'name email')
       .sort(sortObj);
 
-    // Fetch related records (Student/Mentor) to check branch/department, registration number, etc.
+    // Fetch related records (Student/Mentor) in batch to prevent N+1 database queries
     const { StudentRecord, MentorRecord } = require('../models/Record');
     
-    // We need to filter and augment the list with student/mentor details
-    let augmentedUsers = [];
+    const studentUserIds = users.filter(u => u.role === 'student').map(u => u._id);
+    const mentorUserIds = users.filter(u => u.role === 'mentor').map(u => u._id);
 
-    for (let u of users) {
+    const [studRecs, mentRecs] = await Promise.all([
+      studentUserIds.length > 0 ? StudentRecord.find({ student: { $in: studentUserIds } }) : [],
+      mentorUserIds.length > 0 ? MentorRecord.find({ mentor: { $in: mentorUserIds } }) : [],
+    ]);
+
+    const studMap = new Map(studRecs.map(r => [r.student.toString(), r]));
+    const mentMap = new Map(mentRecs.map(r => [r.mentor.toString(), r]));
+
+    let augmentedUsers = users.map(u => {
       let dept = '';
       let regNo = '';
       let phone = '';
       let photoUrl = '';
 
       if (u.role === 'student') {
-        const studRec = await StudentRecord.findOne({ student: u._id });
+        const studRec = studMap.get(u._id.toString());
         if (studRec && studRec.personal) {
           dept = studRec.personal.branch || '';
           regNo = studRec.personal.registrationNo || '';
@@ -280,14 +288,14 @@ router.get('/admin/deactivated-users', authorize('admin'), async (req, res) => {
           photoUrl = studRec.personal.photoUrl || '';
         }
       } else if (u.role === 'mentor') {
-        const mentRec = await MentorRecord.findOne({ mentor: u._id });
+        const mentRec = mentMap.get(u._id.toString());
         if (mentRec && mentRec.profile) {
           dept = mentRec.profile.department || '';
           phone = mentRec.profile.contact || '';
         }
       }
 
-      augmentedUsers.push({
+      return {
         id: u._id,
         name: u.name,
         email: u.email,
@@ -301,8 +309,8 @@ router.get('/admin/deactivated-users', authorize('admin'), async (req, res) => {
         registrationNo: regNo,
         phone: phone,
         photoUrl: photoUrl,
-      });
-    }
+      };
+    });
 
     // Apply department filter in memory if specified
     if (department) {
@@ -323,10 +331,11 @@ router.get('/admin/deactivated-users', authorize('admin'), async (req, res) => {
         .populate('activatedBy', 'name email')
         .sort(sortObj);
 
-      augmentedUsers = [];
-      for (let u of regFilteredUsers) {
-        const studRec = matchingStudRecs.find(r => r.student.toString() === u._id.toString());
-        augmentedUsers.push({
+      const regStudMap = new Map(matchingStudRecs.map(r => [r.student.toString(), r]));
+
+      augmentedUsers = regFilteredUsers.map(u => {
+        const studRec = regStudMap.get(u._id.toString());
+        return {
           id: u._id,
           name: u.name,
           email: u.email,
@@ -340,8 +349,8 @@ router.get('/admin/deactivated-users', authorize('admin'), async (req, res) => {
           registrationNo: studRec?.personal?.registrationNo || '',
           phone: studRec?.personal?.personalCell || '',
           photoUrl: studRec?.personal?.photoUrl || '',
-        });
-      }
+        };
+      });
     }
 
     // Pagination

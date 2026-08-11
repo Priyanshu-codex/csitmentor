@@ -87,6 +87,83 @@ returning a generic 500 instead of a meaningful 409.
 
 ---
 
+### 10. `routes/auth.js` — `GET /api/auth/test-email` was unauthenticated (CRITICAL SECURITY)
+
+**Bug:** The test-email endpoint had no authentication or authorization guard.  
+Any unauthenticated user could `GET /api/auth/test-email` to trigger SMTP calls,
+wasting Brevo credits and potentially revealing server configuration.
+
+**Fix:** Added `protect, authorize('admin')` middleware to the route handler.
+
+---
+
+### 11. `config/mail.js` — Developer's personal Gmail hardcoded as `fromEmail` fallback (SECURITY / PII)
+
+**Bug:** `fromEmail: process.env.MAIL_FROM || 'priyanshumahobia22@gmail.com'`  
+If `MAIL_FROM` env var was not set in production, all outgoing emails (including
+password reset emails) would appear to come from the developer's personal address.
+
+**Fix:** Replaced fallback with `noreply@csitdurg.in` (the institutional address).
+
+---
+
+### 12. `scripts/seed.js` — Hardcoded default admin password `Admin@2024` (SECURITY)
+
+**Bug:** `password: process.env.ADMIN_PASSWORD || 'Admin@2024'`  
+If `ADMIN_PASSWORD` was missing from `.env`, the seed script would silently create
+an admin account with a well-known default password, with no warning.
+
+**Fix:** Added a fail-fast guard:
+```js
+if (!process.env.ADMIN_PASSWORD || !process.env.ADMIN_PASSWORD.trim()) {
+  console.error('❌ CRITICAL: ADMIN_PASSWORD environment variable is required.');
+  process.exit(1);
+}
+```
+
+---
+
+### 13. `routes/records.js` — Oversized base64 photo bypassed schema validator (CORRECTNESS)
+
+**Bug:** The `PATCH /:studentId/:section` handler wrote data to the database before
+Mongoose schema validators ran. A large base64 `photoUrl` (>150KB) could be stored
+to the DB if the JSON body parser accepted it, bypassing the Mongoose model validator.
+
+**Fix:** Added an explicit pre-DB size check:
+```js
+if (section === 'personal' && req.body.data?.photoUrl?.length > 150000) {
+  return res.status(400).json({ ... });
+}
+```
+
+---
+
+### 14. `routes/users.js` — N+1 database queries in deactivated-users list (PERFORMANCE)
+
+**Bug:** The `GET /api/users/admin/deactivated-users` route looped over every deactivated
+user and issued one separate `findOne()` database call per user to fetch their
+student/mentor record — O(n) database round-trips.
+
+**Fix:** Replaced sequential per-user `findOne()` calls with a single batched
+`Promise.all()` using `$in` queries, then used an in-memory `Map` for O(1) lookups.
+Response structure is identical; only performance changed.
+
+---
+
+### 15. `config/constants.js` — NEW: Centralized configuration constants (MAINTAINABILITY)
+
+**Addition:** Created `config/constants.js` as the single source of truth for:
+- `BRANCHES` — 7 branch definitions including AIDS  
+- `SEMESTERS` — Semesters 1–8  
+- `ACTIVITY_CATEGORIES` — Academic, Co-Curricular, Extra-Curricular, Sports, Technical  
+- `RUBRIC_CRITERIA` — 6 parameters (A–F, total weight = 100, verified at startup)  
+- `ACADEMIC_CONSTANTS` — Photo max size, semester count, rubric weight  
+
+Includes a startup-time assertion: if the rubric weights don't sum to 100, the module
+throws immediately so misconfigurations are caught before the server accepts requests.
+
+---
+
 ## Quick Start
 
 ```bash
