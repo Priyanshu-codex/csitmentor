@@ -114,38 +114,6 @@ npm start
 
 ---
 
-## 📝 Environment Variables (`.env.example`)
-
-```env
-# MongoDB Connection
-MONGO_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/csit_mentor_diary
-
-# JWT Secrets
-JWT_SECRET=your_jwt_secret_hash_here
-JWT_EXPIRES_IN=24h
-
-# Authorization Keys for Signup
-ADMIN_REGISTRATION_KEY=Admin@csit
-MENTOR_REGISTRATION_KEY=Mentor@csit
-
-# Server Port
-PORT=5000
-NODE_ENV=development
-
-# Allowed CORS Origins
-ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:5500,http://localhost:5000
-
-# Brevo SMTP Configuration
-BREVO_HOST=smtp-relay.brevo.com
-BREVO_PORT=587
-BREVO_USER=your_brevo_username
-BREVO_PASS=your_brevo_smtp_key
-MAIL_FROM=priyanshumahobia22@gmail.com
-CLIENT_URL=https://csitmentor.onrender.com
-```
-
----
-
 ## 🏷️ User Roles & Section Access
 
 | Role | Description | Access Rights |
