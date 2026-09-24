@@ -671,6 +671,8 @@
               class="icon">🔗</span> Assign Mentors</button>
           <button class="nav-item" id="nav-all-records" onclick="navigate('all-records')"><span class="icon">📂</span>
             All Student Records</button>
+          <button class="nav-item" id="nav-export-tg" onclick="openTgExportModal()"><span class="icon">📊</span>
+            Export TG Data</button>
         </div>
         <div class="sidebar-section" id="mentor-section" style="display:none;">
           <div class="sidebar-section-label">My Students</div>
@@ -1061,6 +1063,74 @@
             </div>
           </div>
         </div>
+
+        <!-- ═══ TG DATA EXPORT MODAL (Admin only) ═══ -->
+        <div id="tg-export-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(13,27,42,0.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px;">
+          <div style="background:var(--white);border-radius:16px;width:100%;max-width:460px;box-shadow:var(--shadow-lg);overflow:hidden;border:1px solid var(--border);">
+            <!-- Modal Header -->
+            <div style="background:linear-gradient(135deg,var(--navy),#1b2d42);padding:18px 24px;display:flex;align-items:center;justify-content:space-between;color:#fff;">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <span style="font-size:22px;">📊</span>
+                <div>
+                  <div style="font-size:16px;font-weight:700;color:var(--white);">TG Data Export</div>
+                  <div id="tg-export-subtitle" style="font-size:12px;opacity:0.85;color:var(--gold-light);">Teacher Guardian Comprehensive Export (.xlsx)</div>
+                </div>
+              </div>
+              <button id="tg-export-close-btn" onclick="closeTgExportModal()" style="background:rgba(255,255,255,0.12);border:none;color:#fff;width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center;">&times;</button>
+            </div>
+
+            <!-- Modal Body -->
+            <div style="padding:24px;">
+              <!-- Progress / Status view -->
+              <div id="tg-export-progress-view">
+                <div style="display:flex;align-items:center;justify-content:center;margin-bottom:20px;min-height:56px;">
+                  <div id="tg-export-spinner" class="export-spinner" style="width:48px;height:48px;border:4px solid #e2e8f0;border-top-color:var(--navy);border-radius:50%;animation:exportSpin 0.8s linear infinite;"></div>
+                  <div id="tg-export-success-icon" style="display:none;font-size:48px;line-height:1;">✅</div>
+                  <div id="tg-export-error-icon" style="display:none;font-size:48px;line-height:1;">❌</div>
+                </div>
+
+                <div id="tg-export-status-title" style="text-align:center;font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;">
+                  Preparing data...
+                </div>
+                <div id="tg-export-status-desc" style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:20px;line-height:1.4;">
+                  Connecting to database and querying student records...
+                </div>
+
+                <!-- Progress Steps Indicator -->
+                <div style="display:flex;gap:8px;margin-bottom:12px;">
+                  <div id="step-prepare" style="flex:1;height:6px;border-radius:3px;background:var(--gold);transition:background 0.3s;"></div>
+                  <div id="step-generate" style="flex:1;height:6px;border-radius:3px;background:#e2e8f0;transition:background 0.3s;"></div>
+                  <div id="step-ready" style="flex:1;height:6px;border-radius:3px;background:#e2e8f0;transition:background 0.3s;"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">
+                  <span>1. Preparing</span>
+                  <span>2. Generating Excel</span>
+                  <span>3. Download Ready</span>
+                </div>
+              </div>
+
+              <!-- Error view -->
+              <div id="tg-export-error-view" style="display:none;text-align:center;padding-top:10px;">
+                <div style="font-size:13px;color:var(--error);margin-bottom:18px;line-height:1.5;" id="tg-export-error-msg">
+                  Unable to generate TG data export. Please try again.
+                </div>
+                <div style="display:flex;gap:10px;justify-content:center;">
+                  <button onclick="closeTgExportModal()" style="padding:9px 18px;border:1px solid var(--border);background:var(--white);border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;">Cancel</button>
+                  <button id="tg-export-retry-btn" onclick="retryLastExport()" style="padding:9px 22px;background:var(--navy);color:var(--gold);border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;">Retry</button>
+                </div>
+              </div>
+
+              <!-- Success Action Buttons -->
+              <div id="tg-export-success-actions" style="display:none;margin-top:20px;text-align:center;">
+                <div style="font-size:12px;color:var(--success);font-weight:600;margin-bottom:16px;line-height:1.4;" id="tg-export-success-details">
+                  Excel file downloaded successfully.
+                </div>
+                <button onclick="closeTgExportModal()" style="padding:9px 28px;background:var(--navy);color:var(--gold);border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700;">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
 
 
         <!-- ═══ ASSIGN MENTOR PANEL (Admin only) ═══ -->

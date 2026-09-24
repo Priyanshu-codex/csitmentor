@@ -2938,6 +2938,223 @@
     }
 
     // ══════════════════════════════════════════════════════
+    //  TG DATA EXPORT (Admin Only)
+    // ══════════════════════════════════════════════════════
+    let _lastExportScope = 'all';
+
+    function buildExportButtonHtml(prefix) {
+      if (!currentUser || currentUser.role !== 'admin') return '';
+      return `
+        <div class="export-dropdown-wrapper" style="position:relative;display:inline-block;">
+          <button type="button" id="btn-export-tg-main" class="btn-export-tg" onclick="toggleExportMenu(event)" title="Export Complete TG Data to Excel (.xlsx)">
+            <span style="font-size:14px;">📊</span>
+            <span>Export TG Data</span>
+            <span style="font-size:9px;margin-left:2px;">▼</span>
+          </button>
+          <div id="export-dropdown-menu" class="export-dropdown-menu" style="display:none;">
+            <div style="padding:6px 14px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;border-bottom:1px solid var(--border);">
+              Excel (.xlsx) Export
+            </div>
+            <button type="button" onclick="closeExportMenu();triggerTgExport('all')" style="width:100%;text-align:left;padding:10px 14px;background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text);font-weight:600;" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background='none'">
+              <span style="font-size:16px;">📑</span>
+              <div>
+                <div>Export All TG Data</div>
+                <div style="font-size:11px;font-weight:400;color:var(--text-muted);">Complete database records (all students)</div>
+              </div>
+            </button>
+            <button type="button" id="btn-export-filtered-opt" onclick="closeExportMenu();triggerTgExport('filtered')" style="width:100%;text-align:left;padding:10px 14px;background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--text);font-weight:600;" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background='none'">
+              <span style="font-size:16px;">🔍</span>
+              <div>
+                <div>Export Filtered Data</div>
+                <div id="export-filtered-desc" style="font-size:11px;font-weight:400;color:var(--text-muted);">Export current filtered view</div>
+              </div>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function toggleExportMenu(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      const menu = document.getElementById('export-dropdown-menu');
+      if (!menu) return;
+      menu.style.display = (menu.style.display === 'none' || !menu.style.display) ? 'block' : 'none';
+    }
+
+    function closeExportMenu() {
+      const menu = document.getElementById('export-dropdown-menu');
+      if (menu) menu.style.display = 'none';
+    }
+
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('export-dropdown-menu');
+      if (menu && menu.style.display !== 'none' && !e.target.closest('.export-dropdown-wrapper')) {
+        menu.style.display = 'none';
+      }
+    });
+
+    function openTgExportModal(initialScope = 'all') {
+      if (!currentUser || currentUser.role !== 'admin') {
+        alert('Access denied. TG Data Export is restricted to administrators.');
+        return;
+      }
+      triggerTgExport(initialScope);
+    }
+
+    function closeTgExportModal() {
+      const modal = document.getElementById('tg-export-modal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function retryLastExport() {
+      triggerTgExport(_lastExportScope);
+    }
+
+    async function triggerTgExport(scope = 'all') {
+      if (!currentUser || currentUser.role !== 'admin') {
+        alert('Access denied. Only administrators can export TG Data.');
+        return;
+      }
+
+      _lastExportScope = scope;
+      closeExportMenu();
+
+      const modal = document.getElementById('tg-export-modal');
+      if (!modal) return;
+
+      const progressView = document.getElementById('tg-export-progress-view');
+      const errorView = document.getElementById('tg-export-error-view');
+      const successActions = document.getElementById('tg-export-success-actions');
+      const spinner = document.getElementById('tg-export-spinner');
+      const successIcon = document.getElementById('tg-export-success-icon');
+      const errorIcon = document.getElementById('tg-export-error-icon');
+      const statusTitle = document.getElementById('tg-export-status-title');
+      const statusDesc = document.getElementById('tg-export-status-desc');
+      const subtitle = document.getElementById('tg-export-subtitle');
+      const stepPrepare = document.getElementById('step-prepare');
+      const stepGenerate = document.getElementById('step-generate');
+      const stepReady = document.getElementById('step-ready');
+      const closeBtn = document.getElementById('tg-export-close-btn');
+
+      // Initialize UI
+      modal.style.display = 'flex';
+      progressView.style.display = 'block';
+      errorView.style.display = 'none';
+      successActions.style.display = 'none';
+
+      spinner.style.display = 'block';
+      successIcon.style.display = 'none';
+      errorIcon.style.display = 'none';
+      closeBtn.disabled = false;
+
+      // STEP 1: Preparing data...
+      statusTitle.textContent = 'Preparing data...';
+      statusDesc.textContent = scope === 'filtered'
+        ? 'Collecting current filter parameters and querying student records...'
+        : 'Connecting to database and querying all student records...';
+      subtitle.textContent = scope === 'filtered'
+        ? 'Filtered TG Data Export (.xlsx)'
+        : 'Complete Database TG Data Export (.xlsx)';
+
+      stepPrepare.style.background = 'var(--gold)';
+      stepGenerate.style.background = '#e2e8f0';
+      stepReady.style.background = '#e2e8f0';
+
+      // Read filter values if filtered
+      const f = readFilters('ar');
+      let qs = '?scope=' + encodeURIComponent(scope);
+      if (scope === 'filtered') {
+        if (f.search) qs += '&search=' + encodeURIComponent(f.search);
+        if (f.branch) qs += '&branch=' + encodeURIComponent(f.branch);
+        if (f.semester) qs += '&semester=' + encodeURIComponent(f.semester);
+        if (f.status) qs += '&status=' + encodeURIComponent(f.status);
+        if (f.sort) qs += '&sort=' + encodeURIComponent(f.sort);
+      }
+
+      // Small pause for perceptual feedback
+      await new Promise(r => setTimeout(r, 350));
+
+      // STEP 2: Generating Excel...
+      statusTitle.textContent = 'Generating Excel...';
+      statusDesc.textContent = 'Structuring 9 specialized sheets, formatting dates, styling workbook...';
+      stepGenerate.style.background = 'var(--gold)';
+
+      try {
+        const token = SESSION.get();
+        const headers = {};
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+
+        const res = await fetch(API_BASE + '/records/export' + qs, {
+          method: 'GET',
+          headers,
+          credentials: 'include',
+        });
+
+        if (!res.ok) {
+          let errMsg = 'Unable to generate TG data export. Please try again.';
+          try {
+            const errData = await res.json();
+            if (errData && errData.message) errMsg = errData.message;
+          } catch (_) {}
+          throw new Error(errMsg);
+        }
+
+        // STEP 3: Download ready!
+        statusTitle.textContent = 'Download ready!';
+        statusDesc.textContent = 'Excel file generated successfully. Initiating browser download...';
+        stepReady.style.background = 'var(--gold)';
+
+        // Extract filename from response header
+        let filename = 'CSIT_Mentor_Diary_TG_Data.xlsx';
+        const disp = res.headers.get('content-disposition');
+        if (disp) {
+          const match = disp.match(/filename="?([^";]+)"?/i);
+          if (match && match[1]) filename = match[1].trim();
+        }
+        const exportCount = res.headers.get('x-export-count');
+
+        const blob = await res.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => window.URL.revokeObjectURL(downloadUrl), 4000);
+
+        // Success state
+        spinner.style.display = 'none';
+        successIcon.style.display = 'block';
+        statusTitle.textContent = 'Download Ready & Saved';
+        statusDesc.textContent = `File "${filename}" has been downloaded.`;
+
+        const detailsEl = document.getElementById('tg-export-success-details');
+        if (detailsEl) {
+          detailsEl.textContent = exportCount !== null
+            ? `Successfully exported ${exportCount} student record(s) across 9 complete sheets.`
+            : 'Excel file generated and downloaded successfully.';
+        }
+        successActions.style.display = 'block';
+      } catch (err) {
+        console.error('Export error:', err);
+        spinner.style.display = 'none';
+        errorIcon.style.display = 'block';
+        statusTitle.textContent = 'Export Failed';
+        statusDesc.textContent = 'An error occurred while generating the TG data export.';
+
+        const errMsgEl = document.getElementById('tg-export-error-msg');
+        if (errMsgEl) {
+          errMsgEl.textContent = err.message || 'Unable to generate TG data export. Please try again.';
+        }
+        errorView.style.display = 'block';
+      }
+    }
+
+    // ══════════════════════════════════════════════════════
     //  ALL STUDENT RECORDS (Admin)
     // ══════════════════════════════════════════════════════
     let _allRecordsCache = null;
@@ -3028,14 +3245,24 @@
 
         const clearX = document.getElementById('ar-clear');
         if (clearX) clearX.style.display = f.search ? 'block' : 'none';
+
+        const filteredDesc = document.getElementById('export-filtered-desc');
+        if (filteredDesc) {
+          filteredDesc.textContent = hasFilter
+            ? `Export ${filtered.length} filtered student(s)`
+            : 'Export current filtered view';
+        }
         return;
       }
 
       el.innerHTML = `
     <div class="card" style="overflow:visible;">
-      <div class="card-header" style="padding-bottom:0;border-bottom:none;">
-        <span class="card-title">All Student Records</span>
-        <span style="font-size:12px;color:var(--text-muted);">Click &ldquo;Open Profile&rdquo; to view or edit</span>
+      <div class="card-header" style="padding-bottom:0;border-bottom:none;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div>
+          <span class="card-title">All Student Records</span>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Click &ldquo;Open Profile&rdquo; to view or edit</div>
+        </div>
+        ${buildExportButtonHtml('ar')}
       </div>
       ${buildFilterBar('ar', studentRecords.length, filtered.length)}
       <div class="card-body" style="padding:0;">
