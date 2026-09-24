@@ -5,8 +5,132 @@ const { StudentRecord } = require('../models/Record');
 const User = require('../models/User');
 const { protect, authorize } = require('../middleware/auth');
 
+const { generateTgWorkbook, getExportFilename } = require('../services/export.service');
+
 // All routes require login
 router.use(protect);
+
+// ── GET & POST /api/records/export — Admin Only TG Data Export ────────────────
+// Must be declared BEFORE /:studentId so Express does not treat 'export' as a studentId.
+// Strict admin authorization: Admin -> allowed; Mentor/Student/Other -> 403 Forbidden.
+const handleTgExport = async (req, res) => {
+  try {
+    const scope = req.query.scope || req.body?.scope || 'all';
+    const search = (req.query.search || req.body?.search || '').trim().toLowerCase();
+    const branch = req.query.branch || req.body?.branch || '';
+    const semester = req.query.semester || req.body?.semester || '';
+    const status = req.query.status || req.body?.status || '';
+    const sort = req.query.sort || req.body?.sort || '';
+
+    // 1. Fetch all active student IDs
+    const studentIds = await User.find({ role: 'student', isActive: true }).distinct('_id');
+
+    // 2. Build database query
+    const query = { student: { $in: studentIds } };
+    if (scope === 'filtered') {
+      if (branch) query['personal.branch'] = branch;
+      if (semester) query['personal.currentSemester'] = semester;
+    }
+
+    // 3. Fetch records with populated student and mentor
+    let records = await StudentRecord.find(query)
+      .populate('student', 'name email role isActive')
+      .populate('mentor', 'name email role')
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    // 4. Apply search, status, and sort filters if scope is filtered
+    if (scope === 'filtered') {
+      if (search) {
+        records = records.filter(r => {
+          const sName = (r.student?.name || r.personal?.name || '').toLowerCase();
+          const sEmail = (r.student?.email || r.personal?.email || '').toLowerCase();
+          const regNo = (r.personal?.registrationNo || '').toLowerCase();
+          const admNo = (r.personal?.admissionNo || '').toLowerCase();
+          return sName.includes(search) || sEmail.includes(search) || regNo.includes(search) || admNo.includes(search);
+        });
+      }
+
+      if (status) {
+        records = records.filter(r => {
+          const perf = r.performanceChart || [];
+          if (perf.length === 0) return status === '';
+          const impr = r.improvementChart || [];
+          let backlogs = 0;
+          perf.forEach(fs => {
+            if ((fs.performanceCategory || '').toUpperCase() !== 'FAIL') return;
+            const cleared = impr.some(i =>
+              (i.subject || '').toLowerCase() === (fs.subject || '').toLowerCase() &&
+              (i.semester || '') === (fs.semester || '') &&
+              (i.performanceCategory || '').toUpperCase() === 'PASS'
+            );
+            if (!cleared) backlogs++;
+          });
+          return status === 'backlog' ? backlogs > 0 : backlogs === 0;
+        });
+      }
+
+      if (sort === 'name-asc') {
+        records.sort((a, b) => {
+          const nameA = (a.student?.name || a.personal?.name || '').toLowerCase();
+          const nameB = (b.student?.name || b.personal?.name || '').toLowerCase();
+          return nameA.localeCompare(nameB);
+        });
+      } else if (sort === 'backlog-desc') {
+        const getB = r => {
+          const perf = r.performanceChart || [];
+          const impr = r.improvementChart || [];
+          let b = 0;
+          perf.forEach(fs => {
+            if ((fs.performanceCategory || '').toUpperCase() !== 'FAIL') return;
+            const clr = impr.some(i => (i.subject || '').toLowerCase() === (fs.subject || '').toLowerCase() && (i.semester || '') === (fs.semester || '') && (i.performanceCategory || '').toUpperCase() === 'PASS');
+            if (!clr) b++;
+          });
+          return b;
+        };
+        records.sort((a, b) => getB(b) - getB(a));
+      } else if (sort === 'backlog-asc') {
+        const getB = r => {
+          const perf = r.performanceChart || [];
+          const impr = r.improvementChart || [];
+          let b = 0;
+          perf.forEach(fs => {
+            if ((fs.performanceCategory || '').toUpperCase() !== 'FAIL') return;
+            const clr = impr.some(i => (i.subject || '').toLowerCase() === (fs.subject || '').toLowerCase() && (i.semester || '') === (fs.semester || '') && (i.performanceCategory || '').toUpperCase() === 'PASS');
+            if (!clr) b++;
+          });
+          return b;
+        };
+        records.sort((a, b) => getB(a) - getB(b));
+      }
+    }
+
+    // 5. Audit Logging
+    console.log(`[EXPORT AUDIT] Admin "${req.user.name}" (${req.user.email}) exported ${records.length} TG records (Scope: ${scope}) on ${new Date().toISOString()}`);
+
+    // 6. Generate Excel workbook
+    const workbook = await generateTgWorkbook(records);
+    const filename = getExportFilename();
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('X-Export-Count', records.length);
+
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (err) {
+    console.error('Export TG Data Error:', err.message);
+    if (!res.headersSent) {
+      res.status(500).json({
+        status: 'error',
+        message: 'Unable to generate TG data export. Please try again.',
+      });
+    }
+  }
+};
+
+router.get('/export', authorize('admin'), handleTgExport);
+router.post('/export', authorize('admin'), handleTgExport);
 
 // ── GET /api/records — admin: all records; mentor: assigned students ──────────
 // Declared BEFORE /:studentId so Express does not treat 'records' as a studentId.
